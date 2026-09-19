@@ -36,6 +36,16 @@ def _novel_stmt():
         selectinload(Novel.uploader),
     )
 
+def _clean_novel_conditions():
+    """Điều kiện lọc loại bỏ các truyện rác, thử nghiệm hoặc không hợp lệ khỏi trang chủ / danh sách công khai."""
+    return [
+        Novel.total_chapters > 0,
+        ~Novel.title.ilike("%test%"),
+        ~Novel.author.ilike("%test%"),
+        ~Novel.author.ilike("%lalala%"),
+        ~Novel.slug.ilike("%test%"),
+    ]
+
 def _serialize(novel: Novel) -> dict:
     """Convert Novel ORM → dict với Unicode NFC, tags, genres, và thông tin uploader."""
     uploader_name = None
@@ -65,15 +75,24 @@ def _serialize(novel: Novel) -> dict:
 @router.get("/featured", response_model=list[NovelOut])
 async def get_featured(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        _novel_stmt().where(Novel.rating >= 4.5).order_by(Novel.rating.desc()).limit(12)
+        _novel_stmt()
+        .where(*_clean_novel_conditions())
+        .where(or_(Novel.rating >= 4.5, Novel.total_chapters >= 10))
+        .order_by(Novel.rating.desc(), Novel.views.desc())
+        .limit(12)
     )
     novels = result.scalars().all()
     return [_serialize(n) for n in novels]
 
 @router.get("/hot", response_model=list[NovelOut])
 async def get_hot(db: AsyncSession = Depends(get_db)):
+    # Điểm Hot tổng hợp = Lượt đọc * 0.5 + Số chương * 1000 + Đánh giá * 2000
+    hot_score = (Novel.views * 0.5) + (Novel.total_chapters * 1000) + (Novel.rating * 2000)
     result = await db.execute(
-        _novel_stmt().order_by(Novel.views.desc()).limit(16)
+        _novel_stmt()
+        .where(*_clean_novel_conditions())
+        .order_by(hot_score.desc(), Novel.views.desc())
+        .limit(16)
     )
     novels = result.scalars().all()
     return [_serialize(n) for n in novels]
@@ -109,8 +128,8 @@ async def list_novels(
     uploader: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = _novel_stmt()
-    count_stmt = select(func.count(distinct(Novel.id)))
+    stmt = _novel_stmt().where(*_clean_novel_conditions())
+    count_stmt = select(func.count(distinct(Novel.id))).where(*_clean_novel_conditions())
 
     if genre:
         stmt = stmt.join(Novel.genres).where(NovelGenre.genre.ilike(f"%{genre}%"))

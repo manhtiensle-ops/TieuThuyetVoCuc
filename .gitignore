@@ -15,3 +15,7 @@ backend/*.pyc
 *.log
 *.rdb
 dump.rdb
+screenshot_*.png
+backend/data/
+backend/app/api/static/
+data/novels/khuay-dao-the-gioi-ao-xe-ve-phep-hang-e-v2

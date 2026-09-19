@@ -197,6 +197,8 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
         cover_url = meta.get("cover_url")
         status = meta.get("status", "ongoing")
         genres = [normalize_text(g) for g in meta.get("genres", ["Khoa Huyễn", "Dị Năng"])]
+        meta_views = int(meta["views"]) if "views" in meta and meta["views"] is not None else None
+        meta_rating = float(meta["rating"]) if "rating" in meta and meta["rating"] is not None else None
 
         # Tìm hoặc tạo Novel trong DB
         novel = (await db.execute(
@@ -212,6 +214,8 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
                 cover_url=cover_url,
                 status=status,
                 total_chapters=0,
+                views=meta_views or 0,
+                rating=meta_rating or 0.0,
             )
             db.add(novel)
             await db.flush()
@@ -222,6 +226,10 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
             if cover_url:
                 novel.cover_url = cover_url
             novel.status = status
+            if meta_views is not None and (novel.views == 0 or meta_views > novel.views):
+                novel.views = meta_views
+            if meta_rating is not None and meta_rating > 0:
+                novel.rating = meta_rating
 
         # Cập nhật Genres
         await db.execute(delete(NovelGenre).where(NovelGenre.novel_id == novel.id))
