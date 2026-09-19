@@ -124,15 +124,76 @@ export interface ChapterCreateInput {
   is_premium?: boolean
 }
 
+export interface CommentAuthor {
+  id: number
+  username: string
+  display_name: string
+  avatar_url: string | null
+  role: 'admin' | 'editor' | 'vip' | 'reader'
+}
+
+export type ReactionType = 'like' | 'laugh' | 'fire' | 'shock'
+
+export interface CommentReactionsCount {
+  like?: number
+  laugh?: number
+  fire?: number
+  shock?: number
+  [key: string]: number | undefined
+}
+
 export interface Comment {
   id: number
   chapter_id: number
-  user: Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'role'>
+  user_id: number
+  paragraph_index: number | null
+  parent_id: number | null
   content: string
-  upvotes: number
+  upvotes?: number
   is_spoiler: boolean
   created_at: string
-  replies?: Comment[]
+  updated_at?: string | null
+  user: CommentAuthor
+  reactions_count: CommentReactionsCount
+  my_reaction: ReactionType | null
+  replies_count: number
+  replies: Comment[]
+}
+
+export interface CommentsSummary {
+  chapter_id: number
+  total_comments: number
+  chapter_comments_count: number
+  paragraph_counts: Record<string, number>
+}
+
+export interface CommentCreateInput {
+  content: string
+  paragraph_index?: number | null
+  parent_id?: number | null
+  is_spoiler?: boolean
+}
+
+export interface CommentReactionResult {
+  comment_id: number
+  user_id: number
+  reaction_type: ReactionType | null
+  reactions_count: CommentReactionsCount
+}
+
+export interface AdminComment {
+  id: number
+  content: string
+  chapter_id: number
+  chapter_title: string | null
+  chapter_number: number | null
+  novel_title: string | null
+  novel_slug: string | null
+  paragraph_index: number | null
+  parent_id: number | null
+  is_spoiler: boolean
+  created_at: string
+  user: CommentAuthor | null
 }
 
 export interface AuthTokens {

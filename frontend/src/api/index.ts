@@ -4,6 +4,11 @@ import type {
   Chapter,
   ChapterMeta,
   Comment,
+  CommentCreateInput,
+  CommentsSummary,
+  CommentReactionResult,
+  ReactionType,
+  AdminComment,
   User,
   PaginatedResponse,
   AuthTokens,
@@ -63,15 +68,34 @@ export const chaptersApi = {
     api.get<Chapter>(`/novels/${novelSlug}/chapters/${chapterNumber}`).then((r) => r.data),
 
   getComments: (chapterId: number, page = 1) =>
-    api.get<PaginatedResponse<Comment>>(`/chapters/${chapterId}/comments`, {
-      params: { page, per_page: 20 },
-    }).then((r) => r.data),
+    commentsApi.list(chapterId, { page, per_page: 20 }),
 
-  addComment: (chapterId: number, body: { content: string; is_spoiler?: boolean }) =>
-    api.post<Comment>(`/chapters/${chapterId}/comments`, body).then((r) => r.data),
+  addComment: (chapterId: number, body: CommentCreateInput) =>
+    commentsApi.create(chapterId, body),
 
   upvoteComment: (commentId: number) =>
-    api.post(`/comments/${commentId}/upvote`).then((r) => r.data),
+    commentsApi.react(commentId, 'like'),
+}
+
+// ── Comments ──────────────────────────────────────────────
+export const commentsApi = {
+  getSummary: (chapterId: number) =>
+    api.get<CommentsSummary>(`/chapters/${chapterId}/comments/summary`).then((r) => r.data),
+
+  list: (
+    chapterId: number,
+    params?: { paragraph_index?: number | null; all_comments?: boolean; page?: number; per_page?: number }
+  ) =>
+    api.get<PaginatedResponse<Comment>>(`/chapters/${chapterId}/comments`, { params }).then((r) => r.data),
+
+  create: (chapterId: number, body: CommentCreateInput) =>
+    api.post<Comment>(`/chapters/${chapterId}/comments`, body).then((r) => r.data),
+
+  react: (commentId: number, reaction_type: ReactionType) =>
+    api.post<CommentReactionResult>(`/comments/${commentId}/react`, { reaction_type }).then((r) => r.data),
+
+  delete: (commentId: number) =>
+    api.delete<{ message: string }>(`/comments/${commentId}`).then((r) => r.data),
 }
 
 // ── Auth ──────────────────────────────────────────────────
@@ -160,6 +184,12 @@ export const adminApi = {
 
   unblockIP: (ipId: number) =>
     api.delete(`/admin/blocked-ips/${ipId}`),
+
+  listComments: (params?: { page?: number; per_page?: number; q?: string }) =>
+    api.get<PaginatedResponse<AdminComment>>('/admin/comments', { params }).then((r) => r.data),
+
+  deleteComment: (commentId: number) =>
+    commentsApi.delete(commentId),
 
   syncFolders: () =>
     api.post<{ novels_synced: number; chapters_synced: number }>('/admin/sync-folders').then((r) => r.data),

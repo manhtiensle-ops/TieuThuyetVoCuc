@@ -124,9 +124,9 @@ Xây dựng phân hệ tương tác cộng đồng đột phá cho nền tảng 
   - Viết unit test / curl test kiểm tra các kịch bản thành công và ngoại lệ (Đã kiểm thử 9/9 test cases thành công).
   - Bổ sung router quản trị `/admin/comments` phục vụ CMS.
 
-- [ ] **Bước 3: Frontend API & Store**
-  - Khai báo interface `Comment`, `CommentReaction`, `CommentsSummary` trong `frontend/src/types/index.ts`.
-  - Viết API client functions trong `frontend/src/api/index.ts`.
+- [x] **Bước 3: Frontend API & Store**
+  - Khai báo interface `Comment`, `CommentReaction`, `CommentsSummary`, `AdminComment` trong `frontend/src/types/index.ts`.
+  - Viết API client functions trong `frontend/src/api/index.ts` (`commentsApi`, cập nhật `chaptersApi` và `adminApi`).
 
 - [ ] **Bước 4: Frontend UI Components**
   - Xây dựng component `ParagraphCommentBadge.tsx`.
