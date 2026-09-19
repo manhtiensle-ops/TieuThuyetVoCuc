@@ -17,6 +17,8 @@ import {
   Home,
   ChevronRight,
   Sparkles,
+  RefreshCw,
+  Download,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi, novelsApi } from '@/api'
@@ -137,6 +139,24 @@ export default function AdminPage() {
     onError: () => toast.error('Cập nhật quyền thất bại!'),
   })
 
+  const syncFoldersMutation = useMutation({
+    mutationFn: adminApi.syncFolders,
+    onSuccess: (data) => {
+      toast.success(`Đồng bộ thành công ${data.novels_synced} tiểu thuyết và ${data.chapters_synced} chương từ /data/novels!`)
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      queryClient.invalidateQueries({ queryKey: ['novels'] })
+    },
+    onError: () => toast.error('Đồng bộ thất bại. Kiểm tra lại thư mục /data/novels!'),
+  })
+
+  const exportFoldersMutation = useMutation({
+    mutationFn: adminApi.exportFolders,
+    onSuccess: (data) => {
+      toast.success(`Đã xuất ${data.novels_exported} tiểu thuyết và ${data.chapters_exported} chương ra thư mục /data/novels!`)
+    },
+    onError: () => toast.error('Xuất file thất bại!'),
+  })
+
   // Permission Guard
   if (!isAuthenticated || (user?.role !== 'admin' && user?.role !== 'editor')) {
     return (
@@ -200,7 +220,27 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => syncFoldersMutation.mutate()}
+            disabled={syncFoldersMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] text-[var(--color-text-primary)] transition-all disabled:opacity-50"
+            title="Quét và đồng bộ các file truyện từ thư mục data/novels/ vào Database"
+          >
+            <RefreshCw size={13} className={cn(syncFoldersMutation.isPending && "animate-spin text-[var(--color-accent-gold)]")} />
+            <span>{syncFoldersMutation.isPending ? 'Đang đồng bộ...' : 'Đồng Bộ /data/novels'}</span>
+          </button>
+
+          <button
+            onClick={() => exportFoldersMutation.mutate()}
+            disabled={exportFoldersMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all disabled:opacity-50"
+            title="Xuất toàn bộ tiểu thuyết & chương hiện có ra thư mục data/novels/"
+          >
+            <Download size={13} />
+            <span>Xuất File MD</span>
+          </button>
+
           <button
             onClick={() => {
               setEditingNovel(null)

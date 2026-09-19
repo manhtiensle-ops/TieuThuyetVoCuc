@@ -105,4 +105,10 @@ export const adminApi = {
 
   deleteChapter: (chapterId: number) =>
     api.delete(`/admin/chapters/${chapterId}`),
+
+  syncFolders: () =>
+    api.post<{ novels_synced: number; chapters_synced: number }>('/admin/sync-folders').then((r) => r.data),
+
+  exportFolders: () =>
+    api.post<{ novels_exported: number; chapters_exported: number }>('/admin/export-folders').then((r) => r.data),
 }

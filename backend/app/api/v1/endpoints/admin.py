@@ -21,6 +21,10 @@ from app.schemas.novel import (
 from app.schemas.admin import AdminStatsOut, UserListOut
 from app.core.deps import require_roles
 from app.core.text import normalize_text, remove_diacritics
+from app.services.ingestion import sync_folder_to_db, export_db_to_folder
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[5] / "data" / "novels"
 
 router = APIRouter(
     prefix="/admin",
@@ -273,3 +277,14 @@ async def delete_chapter(
         novel.total_chapters = count
 
     return None
+
+# ── Folder Sync / Ingestion ───────────────────────────────────────────
+@router.post("/sync-folders")
+async def trigger_folder_sync(db: AsyncSession = Depends(get_db)):
+    res = await sync_folder_to_db(db, DATA_DIR)
+    return res
+
+@router.post("/export-folders")
+async def trigger_folder_export(db: AsyncSession = Depends(get_db)):
+    res = await export_db_to_folder(db, DATA_DIR)
+    return res
