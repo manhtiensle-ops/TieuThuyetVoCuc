@@ -35,3 +35,9 @@ export const clamp = (val: number, min: number, max: number) =>
 
 /** Linear interpolation */
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+/** Chuẩn hóa Unicode tiếng Việt sang dạng dựng sẵn (NFC) */
+export function normalizeNFC(text: string): string {
+  if (!text) return ''
+  return text.normalize('NFC')
+}

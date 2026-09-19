@@ -1,15 +1,13 @@
 @import "tailwindcss";
 
-/* ── Google Fonts ──────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@400;500;600;700&display=swap');
-
 /* ── Design Tokens ─────────────────────────────────────── */
 @theme {
-  /* Fonts */
-  --font-heading:   "Cormorant Garamond", Georgia, serif;
-  --font-body:      "Crimson Pro", "Libre Baskerville", Georgia, serif;
-  --font-display:   "Cinzel", "Trajan Pro", serif;
-  --font-ui:        "Inter", system-ui, sans-serif;
+  /* Fonts optimized 100% for Vietnamese */
+  --font-heading:   "Be Vietnam Pro", "Lora", serif;
+  --font-body:      "Literata", "Lora", Georgia, serif;
+  --font-body-sans: "Be Vietnam Pro", "Inter", sans-serif;
+  --font-display:   "Cinzel", serif;
+  --font-ui:        "Inter", "Be Vietnam Pro", system-ui, sans-serif;
 
   /* Dark mode — Academia Arcana (default) */
   --color-bg-void:       #08090D;
@@ -30,7 +28,7 @@
   --color-border-strong: rgba(201,168,76,0.45);
 }
 
-/* ── Base Reset ────────────────────────────────────────── */
+/* ── Base Reset & Vietnamese Font Quality Guard ────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -45,6 +43,19 @@ body {
   color: var(--color-text-primary);
   min-height: 100dvh;
   overflow-x: hidden;
+
+  /* Chống méo dấu (Faux Bold / Faux Italic) & Tối ưu kerning tiếng Việt */
+  font-synthesis: none;
+  -webkit-font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+
+/* ── Heading cushion: Ngăn cắt ngọn dấu (Diacritic Clipping) */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.35;
+  padding-block: 0.1em;
+  overflow-wrap: break-word;
 }
 
 /* ── Theme Variants ────────────────────────────────────── */
@@ -93,13 +104,14 @@ body {
   outline-offset: 3px;
 }
 
-/* ── Typography ────────────────────────────────────────── */
-.font-heading  { font-family: var(--font-heading); }
-.font-body     { font-family: var(--font-body); }
-.font-display  { font-family: var(--font-display); }
-.font-ui       { font-family: var(--font-ui); }
+/* ── Typography Classes ────────────────────────────────── */
+.font-heading   { font-family: var(--font-heading); }
+.font-body      { font-family: var(--font-body); }
+.font-body-sans { font-family: var(--font-body-sans); }
+.font-display   { font-family: var(--font-display); }
+.font-ui        { font-family: var(--font-ui); }
 
-/* ── Reading Container ─────────────────────────────────── */
+/* ── Reading Container Tối ưu Sách Tiếng Việt ──────────── */
 .reading-prose {
   font-family: var(--font-body);
   font-size: clamp(17px, 2.5vw, 20px);
@@ -108,15 +120,31 @@ body {
   margin-inline: auto;
   color: var(--color-text-primary);
   hyphens: auto;
+  overflow-y: visible;
 }
 
+.reading-prose[data-font="sans"] {
+  font-family: var(--font-body-sans);
+  line-height: 1.75;
+}
+
+.reading-prose p {
+  margin-bottom: 1.35em;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Drop Cap hỗ trợ hoàn hảo dấu tiếng Việt (Ấ, Ở, Đ,...) */
 .reading-prose > p:first-child::first-letter {
-  font-family: var(--font-display);
-  font-size: 4rem;
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
   float: left;
-  line-height: 1;
-  margin: 0.05em 0.12em 0 0;
+  line-height: 0.9;
+  padding-top: 0.12em;
+  padding-right: 0.15em;
+  padding-bottom: 0.05em;
   color: var(--color-accent-gold);
+  font-weight: 600;
 }
 
 /* ── Ink Underline Link ────────────────────────────────── */

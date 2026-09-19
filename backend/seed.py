@@ -6,6 +6,7 @@ from app.models.user import User
 from app.models.novel import Novel, NovelGenre
 from app.models.chapter import Chapter
 from app.core.security import hash_password
+from app.core.text import normalize_text
 
 engine = create_async_engine(settings.DATABASE_URL)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

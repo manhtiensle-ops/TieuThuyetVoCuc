@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.models.novel import Novel, NovelGenre
 from app.models.chapter import Chapter
 from app.schemas.novel import NovelOut, NovelListOut, ChapterMetaOut
+from app.core.text import normalize_text
 from math import ceil
 
 router = APIRouter(prefix="/novels", tags=["novels"])
@@ -83,15 +84,15 @@ async def get_chapters(slug: str, db: AsyncSession = Depends(get_db)):
     return result.scalars().all()
 
 def _serialize(novel: Novel) -> dict:
-    """Convert Novel ORM → dict với genres là list[str]."""
+    """Convert Novel ORM → dict với genres là list[str] và Unicode chuẩn NFC."""
     return {
         "id": novel.id,
         "slug": novel.slug,
-        "title": novel.title,
-        "author": novel.author,
+        "title": normalize_text(novel.title),
+        "author": normalize_text(novel.author),
         "cover_url": novel.cover_url,
-        "description": novel.description,
-        "genres": [g.genre for g in novel.genres],
+        "description": normalize_text(novel.description),
+        "genres": [normalize_text(g.genre) for g in novel.genres],
         "status": novel.status,
         "total_chapters": novel.total_chapters,
         "views": novel.views,

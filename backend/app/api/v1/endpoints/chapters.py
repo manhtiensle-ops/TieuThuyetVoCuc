@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.novel import ChapterOut
 from app.schemas.comment import CommentOut, CommentCreate
 from app.core.deps import get_current_user
+from app.core.text import normalize_text
 
 router = APIRouter(tags=["chapters"])
 
@@ -22,6 +23,10 @@ async def get_chapter(slug: str, number: int, db: AsyncSession = Depends(get_db)
     )).scalar_one_or_none()
     if not chapter:
         raise HTTPException(404, "Không tìm thấy chương")
+    
+    # Đảm bảo Unicode NFC trước khi gửi tới frontend
+    chapter.title = normalize_text(chapter.title)
+    chapter.content = normalize_text(chapter.content)
     return chapter
 
 @router.get("/chapters/{chapter_id}/comments", response_model=list[CommentOut])
@@ -39,7 +44,12 @@ async def add_comment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    comment = Comment(chapter_id=chapter_id, user_id=current_user.id, **body.model_dump())
+    comment = Comment(
+        chapter_id=chapter_id,
+        user_id=current_user.id,
+        content=normalize_text(body.content),
+        is_spoiler=body.is_spoiler,
+    )
     db.add(comment)
     await db.flush()
     return comment

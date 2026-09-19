@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen } from 'lucide-react'
 import { useReaderStore, useUIStore } from '@/stores'
-import { cn } from '@/lib/utils'
+import { cn, normalizeNFC } from '@/lib/utils'
 import type { Chapter, ChapterMeta } from '@/types'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -65,7 +65,16 @@ function ReaderControls({
   chapters: ChapterMeta[]
   onTocOpen: () => void
 }) {
-  const { theme, fontSize, lineHeight, setTheme, setFontSize, setLineHeight } = useReaderStore()
+  const {
+    theme,
+    fontSize,
+    lineHeight,
+    fontFamily,
+    setTheme,
+    setFontSize,
+    setLineHeight,
+    setFontFamily,
+  } = useReaderStore()
   const { readerControlsVisible } = useUIStore()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -157,6 +166,37 @@ function ReaderControls({
                     {label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Font Family (Vietnamese Optimized) */}
+            <div className="mb-4">
+              <label style={{ fontFamily: 'var(--font-ui)', fontSize: '11px', color: 'var(--color-text-muted)' }}>Kiểu chữ</label>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => setFontFamily('serif')}
+                  className="flex-1 py-1.5 rounded text-xs transition-all"
+                  style={{
+                    background: fontFamily === 'serif' ? 'var(--color-accent-gold)' : 'var(--color-bg-raised)',
+                    color: fontFamily === 'serif' ? '#000' : 'var(--color-text-secondary)',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Literata
+                </button>
+                <button
+                  onClick={() => setFontFamily('sans')}
+                  className="flex-1 py-1.5 rounded text-xs transition-all"
+                  style={{
+                    background: fontFamily === 'sans' ? 'var(--color-accent-gold)' : 'var(--color-bg-raised)',
+                    color: fontFamily === 'sans' ? '#000' : 'var(--color-text-secondary)',
+                    fontFamily: 'var(--font-body-sans)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Vietnam Pro
+                </button>
               </div>
             </div>
 
@@ -268,7 +308,7 @@ interface ReaderViewProps {
 }
 
 export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
-  const { theme, fontSize, lineHeight } = useReaderStore()
+  const { theme, fontSize, lineHeight, fontFamily } = useReaderStore()
   const { setReaderControlsVisible } = useUIStore()
   const [tocOpen, setTocOpen] = useState(false)
   const contentRef = useRef<HTMLElement>(null)
@@ -366,13 +406,14 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
             style={{
               fontFamily: 'var(--font-heading)',
               fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-              fontWeight: 400,
+              fontWeight: 600,
               color: 'var(--color-text-primary)',
-              lineHeight: 1.2,
+              lineHeight: 1.35,
+              padding: '0.15em 0',
               letterSpacing: '-0.01em',
             }}
           >
-            {chapter.title}
+            {normalizeNFC(chapter.title)}
           </h1>
           {/* Divider ornament */}
           <div className="flex items-center gap-3 justify-center mt-8 mb-0">
@@ -385,11 +426,12 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
         {/* Reading content */}
         <article
           className="reading-prose"
+          data-font={fontFamily}
           style={{
             fontSize: fontSizeMap[fontSize],
             lineHeight: lineHeightMap[lineHeight],
           }}
-          dangerouslySetInnerHTML={{ __html: chapter.content }}
+          dangerouslySetInnerHTML={{ __html: normalizeNFC(chapter.content) }}
         />
 
         {/* Chapter end ornament */}
