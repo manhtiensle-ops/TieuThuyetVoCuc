@@ -59,27 +59,61 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Theme Variants ────────────────────────────────────── */
+[data-theme="light"] {
+  --color-bg-void:       #F8FAFC;
+  --color-bg-deep:       #F1F5F9;
+  --color-bg-surface:    #FFFFFF;
+  --color-bg-raised:     #E2E8F0;
+
+  --color-text-primary:  #0F172A;
+  --color-text-secondary:#334155;
+  --color-text-muted:    #64748B;
+
+  --color-accent-gold:   #B45309;
+  --color-accent-amber:  #D97706;
+  --color-accent-bronze: #78350F;
+
+  --color-border-subtle: rgba(15, 23, 42, 0.08);
+  --color-border-medium: rgba(15, 23, 42, 0.16);
+  --color-border-strong: rgba(15, 23, 42, 0.28);
+}
+
 [data-theme="sepia"] {
-  --color-bg-void:       #F5EDD8;
-  --color-bg-deep:       #EDE0C4;
-  --color-bg-surface:    #E5D5B0;
-  --color-bg-raised:     #DCC89A;
-  --color-text-primary:  #2C1810;
-  --color-text-secondary:#6B4C3B;
-  --color-text-muted:    #9C7A67;
+  --color-bg-void:       #FAF4E6;
+  --color-bg-deep:       #F4ECE0;
+  --color-bg-surface:    #EADBCE;
+  --color-bg-raised:     #DFCEBD;
+
+  --color-text-primary:  #2D1C12;
+  --color-text-secondary:#5A3E2B;
+  --color-text-muted:    #856B58;
+
   --color-accent-gold:   #8B4513;
   --color-accent-amber:  #A0522D;
-  --color-border-subtle: rgba(139,69,19,0.15);
-  --color-border-medium: rgba(139,69,19,0.3);
+  --color-accent-bronze: #663300;
+
+  --color-border-subtle: rgba(90, 62, 43, 0.12);
+  --color-border-medium: rgba(90, 62, 43, 0.22);
+  --color-border-strong: rgba(90, 62, 43, 0.38);
 }
 
 [data-theme="oled"] {
   --color-bg-void:       #000000;
-  --color-bg-deep:       #050508;
-  --color-bg-surface:    #0A0A12;
-  --color-bg-raised:     #0F0F1A;
-  --color-text-primary:  #D4C5A9;
-  --color-text-secondary:#7A6F60;
+  --color-bg-deep:       #000000;
+  --color-bg-surface:    #0A0A0E;
+  --color-bg-raised:     #14141C;
+
+  --color-text-primary:  #D8CCA8;
+  --color-text-secondary:#8C8068;
+  --color-text-muted:    #554D3C;
+
+  --color-accent-gold:   #C9A84C;
+  --color-accent-amber:  #D97706;
+  --color-accent-bronze: #92400E;
+
+  --color-border-subtle: rgba(201, 168, 76, 0.15);
+  --color-border-medium: rgba(201, 168, 76, 0.28);
+  --color-border-strong: rgba(201, 168, 76, 0.5);
 }
 
 /* ── Browser Surfaces — Impeccable Requirement ─────────── */

@@ -102,6 +102,6 @@ export interface PaginatedResponse<T> {
   total_pages: number
 }
 
-export type Theme = 'dark' | 'sepia' | 'oled'
+export type Theme = 'dark' | 'light' | 'sepia' | 'oled'
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl'
 export type LineHeight = 'compact' | 'normal' | 'loose'

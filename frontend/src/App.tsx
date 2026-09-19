@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MainLayout } from '@/components/layout/MainLayout'
+import { useReaderStore } from '@/stores'
 import '@/styles/globals.css'
 
 // Lazy pages
@@ -102,9 +103,18 @@ const queryClient = new QueryClient({
   },
 })
 
+function ThemeSync() {
+  const theme = useReaderStore((s) => s.theme)
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+  return null
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
+      <ThemeSync />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
         <Toaster

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen, Home } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen, Home, Sparkles } from 'lucide-react'
 import { useReaderStore, useUIStore } from '@/stores'
 import { cn, normalizeNFC } from '@/lib/utils'
 import type { Chapter, ChapterMeta } from '@/types'
@@ -83,8 +83,9 @@ function ReaderControls({
 
   const themes = [
     { key: 'dark' as const, icon: Moon, label: 'Tối' },
+    { key: 'light' as const, icon: Sun, label: 'Sáng' },
     { key: 'sepia' as const, icon: BookOpen, label: 'Sepia' },
-    { key: 'oled' as const, icon: Sun, label: 'OLED' },
+    { key: 'oled' as const, icon: Sparkles, label: 'OLED' },
   ]
 
   return (
