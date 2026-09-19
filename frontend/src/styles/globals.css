@@ -162,14 +162,21 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.75;
 }
 
-.reading-prose p {
-  margin-bottom: 1.35em;
+.reading-prose p,
+.reading-prose .reading-paragraph {
+  margin-bottom: 0;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
+.paragraph-wrapper {
+  margin-bottom: 1.35em;
+}
+
 /* Drop Cap hỗ trợ hoàn hảo dấu tiếng Việt (Ấ, Ở, Đ,...) */
-.reading-prose > p:first-child::first-letter {
+.reading-prose > p:first-child::first-letter,
+.reading-prose .paragraph-wrapper:first-child .reading-paragraph::first-letter,
+.reading-prose .paragraph-wrapper:first-child .reading-paragraph > p:first-child::first-letter {
   font-family: var(--font-heading);
   font-size: 3.5rem;
   float: left;

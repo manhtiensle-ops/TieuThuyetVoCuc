@@ -128,12 +128,14 @@ Xây dựng phân hệ tương tác cộng đồng đột phá cho nền tảng 
   - Khai báo interface `Comment`, `CommentReaction`, `CommentsSummary`, `AdminComment` trong `frontend/src/types/index.ts`.
   - Viết API client functions trong `frontend/src/api/index.ts` (`commentsApi`, cập nhật `chaptersApi` và `adminApi`).
 
-- [ ] **Bước 4: Frontend UI Components**
+- [x] **Bước 4: Frontend UI Components**
   - Xây dựng component `ParagraphCommentBadge.tsx`.
   - Xây dựng component `CommentDrawer.tsx` (sử dụng Tailwind + Framer Motion).
   - Xây dựng component `ChapterCommentsSection.tsx`.
-  - Tích hợp vào `ReaderView.tsx` (kết nối dữ liệu realtime với TanStack Query).
+  - Tích hợp vào `ReaderView.tsx` (kết nối dữ liệu realtime, trích xuất đoạn văn thông minh, đồng bộ 4 themes).
 
-- [ ] **Bước 5: Tích Hợp Admin CMS & Kiểm Thử Toàn Diện**
+- [x] **Bước 5: Tích Hợp Admin CMS & Kiểm Thử Toàn Diện**
   - Bổ sung tab quản lý bình luận trên `AdminPage.tsx`.
+  - Tìm kiếm nội dung, lọc theo người dùng, truyện, chương và xóa bình luận vi phạm.
   - Kiểm thử trải nghiệm thực tế trên cả 4 giao diện (Sáng, Tối, Sepia, OLED), màn hình desktop và điện thoại mobile.
+  - Toàn bộ 5 bước đã hoàn thành xuất sắc và vượt qua các bài kiểm thử thực tế.

@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen, Home, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen, Home, Sparkles, MessageSquare } from 'lucide-react'
 import { useReaderStore, useUIStore } from '@/stores'
 import { cn, normalizeNFC } from '@/lib/utils'
-import type { Chapter, ChapterMeta } from '@/types'
+import type { Chapter, ChapterMeta, CommentsSummary } from '@/types'
+import { commentsApi } from '@/api'
+import { parseContentParagraphs } from '@/lib/paragraphParser'
+import { ParagraphCommentBadge } from './ParagraphCommentBadge'
+import { CommentDrawer } from './CommentDrawer'
+import { ChapterCommentsSection } from './ChapterCommentsSection'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -59,11 +64,15 @@ function ReaderControls({
   chapter,
   chapters,
   onTocOpen,
+  onCommentsOpen,
+  totalComments = 0,
 }: {
   novel: { slug: string; title: string }
   chapter: Chapter
   chapters: ChapterMeta[]
   onTocOpen: () => void
+  onCommentsOpen?: () => void
+  totalComments?: number
 }) {
   const {
     theme,
@@ -130,6 +139,21 @@ function ReaderControls({
         </span>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          {onCommentsOpen && (
+            <button
+              onClick={onCommentsOpen}
+              className="relative p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)] transition-all cursor-pointer"
+              aria-label="Thảo luận chương"
+              title="Bình luận chương"
+            >
+              <MessageSquare size={18} />
+              {totalComments > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[var(--color-accent-gold)] text-black leading-tight">
+                  {totalComments > 99 ? '99+' : totalComments}
+                </span>
+              )}
+            </button>
+          )}
           <button onClick={onTocOpen} className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)] transition-all" aria-label="Mục lục" title="Mục lục chương">
             <List size={18} />
           </button>
@@ -333,8 +357,32 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
   const { theme, fontSize, lineHeight, fontFamily } = useReaderStore()
   const { setReaderControlsVisible } = useUIStore()
   const [tocOpen, setTocOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedParagraphIndex, setSelectedParagraphIndex] = useState<number | null>(null)
+  const [selectedParagraphText, setSelectedParagraphText] = useState<string | undefined>(undefined)
+  const [commentsSummary, setCommentsSummary] = useState<CommentsSummary | null>(null)
   const contentRef = useRef<HTMLElement>(null)
   const lastScrollY = useRef(0)
+
+  // Parse paragraphs from chapter content
+  const paragraphs = useMemo(() => {
+    return parseContentParagraphs(chapter.content)
+  }, [chapter.content])
+
+  // Fetch comments summary
+  const fetchSummary = useCallback(async () => {
+    if (!chapter.id) return
+    try {
+      const summary = await commentsApi.getSummary(chapter.id)
+      setCommentsSummary(summary)
+    } catch (err) {
+      console.error('Lỗi tải tóm tắt bình luận:', err)
+    }
+  }, [chapter.id])
+
+  useEffect(() => {
+    fetchSummary()
+  }, [fetchSummary])
 
   // Apply theme to document
   useEffect(() => {
@@ -383,12 +431,16 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase()
+      if (activeTag === 'input' || activeTag === 'textarea') return
+      if (drawerOpen) return
+
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1)
       if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate])
+  }, [navigate, drawerOpen])
 
   return (
     <div
@@ -402,6 +454,12 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
         chapter={chapter}
         chapters={chapters}
         onTocOpen={() => setTocOpen(true)}
+        onCommentsOpen={() => {
+          setSelectedParagraphIndex(null)
+          setSelectedParagraphText(undefined)
+          setDrawerOpen(true)
+        }}
+        totalComments={commentsSummary?.total_comments || 0}
       />
 
       {/* Main content */}
@@ -453,8 +511,37 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
             fontSize: fontSizeMap[fontSize],
             lineHeight: lineHeightMap[lineHeight],
           }}
-          dangerouslySetInnerHTML={{ __html: normalizeNFC(chapter.content) }}
-        />
+        >
+          {paragraphs.map((para) => (
+            <div
+              key={para.index}
+              className="paragraph-wrapper group relative flex items-start justify-between gap-3 rounded-lg p-1 -mx-1 transition-colors duration-150"
+              style={{
+                backgroundColor:
+                  selectedParagraphIndex === para.index && drawerOpen
+                    ? 'var(--color-bg-raised)'
+                    : 'transparent',
+              }}
+            >
+              <div
+                className="flex-1 reading-paragraph"
+                dangerouslySetInnerHTML={{ __html: para.html }}
+              />
+              <div className="shrink-0 pt-1 select-none">
+                <ParagraphCommentBadge
+                  count={commentsSummary?.paragraph_counts?.[String(para.index)] || 0}
+                  active={selectedParagraphIndex === para.index && drawerOpen}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectedParagraphIndex(para.index)
+                    setSelectedParagraphText(para.text)
+                    setDrawerOpen(true)
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </article>
 
         {/* Chapter end ornament */}
         <div className="max-w-2xl mx-auto flex flex-col items-center mt-16 mb-8 gap-3">
@@ -465,6 +552,14 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
             </span>
             <div className="h-px flex-1" style={{ background: 'var(--color-border-subtle)' }} />
           </div>
+        </div>
+
+        {/* Chapter Comments Section */}
+        <div className="max-w-2xl mx-auto">
+          <ChapterCommentsSection
+            chapterId={chapter.id}
+            onCommentCountChange={fetchSummary}
+          />
         </div>
       </main>
 
@@ -532,6 +627,16 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
           </>
         )}
       </AnimatePresence>
+
+      {/* Inline Comments Drawer */}
+      <CommentDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        chapterId={chapter.id}
+        paragraphIndex={selectedParagraphIndex}
+        paragraphText={selectedParagraphText}
+        onCommentCountChange={fetchSummary}
+      />
     </div>
   )
 }

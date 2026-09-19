@@ -10,15 +10,20 @@ interface AuthState {
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  logout: () => {
-    localStorage.removeItem('access_token')
-    set({ user: null, isAuthenticated: false })
-  },
-}))
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      logout: () => {
+        localStorage.removeItem('access_token')
+        set({ user: null, isAuthenticated: false })
+      },
+    }),
+    { name: 'novel-auth-state' }
+  )
+)
 
 // ── Reading Preferences Store (persisted) ─────────────────────────────────────
 interface ReaderState {

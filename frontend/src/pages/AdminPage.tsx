@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   AlertTriangle,
   X,
+  MessageSquare,
 } from 'lucide-react'
 import { novelsApi, adminApi } from '@/api'
 import { useAuthStore } from '@/stores'
@@ -30,6 +31,7 @@ import type {
   NovelCreateInput,
   ChapterCreateInput,
   Report,
+  AdminComment,
 } from '@/types'
 
 // Simple Toast fallback
@@ -43,13 +45,15 @@ export default function AdminPage() {
   const queryClient = useQueryClient()
   const { user, isAuthenticated } = useAuthStore()
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'novels' | 'users' | 'reports' | 'blacklist'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'novels' | 'users' | 'reports' | 'blacklist' | 'comments'>('overview')
 
   // Search / Filters
   const [novelQuery, setNovelQuery] = useState('')
   const [userQuery, setUserQuery] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState('')
   const [reportStatusFilter, setReportStatusFilter] = useState<'all' | 'pending' | 'resolved' | 'dismissed'>('all')
+  const [commentQuery, setCommentQuery] = useState('')
+  const [commentPage, setCommentPage] = useState(1)
 
   // Modals state
   const [isNovelModalOpen, setIsNovelModalOpen] = useState(false)
@@ -116,7 +120,22 @@ export default function AdminPage() {
     enabled: (activeTab === 'blacklist' || activeTab === 'overview') && user?.role === 'admin',
   })
 
+  const { data: commentsData, isLoading: isLoadingComments } = useQuery({
+    queryKey: ['admin', 'comments', commentPage, commentQuery],
+    queryFn: () => adminApi.listComments({ page: commentPage, per_page: 20, q: commentQuery || undefined }),
+    enabled: activeTab === 'comments' || activeTab === 'overview',
+  })
+
   // Mutations
+  const deleteCommentMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteComment(id),
+    onSuccess: () => {
+      toast.success('Đã xóa bình luận thành công!')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'comments'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+    onError: () => toast.error('Không thể xóa bình luận!'),
+  })
   const createNovelMutation = useMutation({
     mutationFn: adminApi.createNovel,
     onSuccess: () => {
@@ -449,6 +468,27 @@ export default function AdminPage() {
             )}
           </button>
         )}
+
+        <button
+          onClick={() => setActiveTab('comments')}
+          className={cn(
+            'pb-3 font-medium transition-all relative flex-shrink-0 flex items-center gap-1.5',
+            activeTab === 'comments'
+              ? 'text-[var(--color-accent-gold)] font-semibold'
+              : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+          )}
+        >
+          <MessageSquare size={14} />
+          <span>Bình Luận</span>
+          {commentsData?.total ? (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[var(--color-bg-raised)] text-[var(--color-text-muted)]">
+              {commentsData.total}
+            </span>
+          ) : null}
+          {activeTab === 'comments' && (
+            <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent-gold)]" />
+          )}
+        </button>
       </div>
 
       {/* Tab 1: Overview */}
@@ -1100,6 +1140,154 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 6: Comments Moderation */}
+      {activeTab === 'comments' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div className="relative w-full sm:w-96">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              <input
+                type="text"
+                value={commentQuery}
+                onChange={(e) => {
+                  setCommentQuery(e.target.value)
+                  setCommentPage(1)
+                }}
+                placeholder="Tìm kiếm nội dung bình luận..."
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent-gold)] font-ui"
+              />
+            </div>
+            <div className="text-xs text-[var(--color-text-muted)] font-ui">
+              Tổng cộng: <span className="font-semibold text-[var(--color-text-primary)]">{commentsData?.total || 0}</span> bình luận
+            </div>
+          </div>
+
+          <div className="p-6 rounded-xl bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] overflow-x-auto">
+            {isLoadingComments ? (
+              <div className="py-12 text-center text-xs text-[var(--color-text-muted)]">
+                Đang tải danh sách bình luận...
+              </div>
+            ) : !commentsData?.items || commentsData.items.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[var(--color-text-muted)]">
+                Không tìm thấy bình luận nào
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs font-ui">
+                <thead>
+                  <tr className="border-b border-[var(--color-border-subtle)] text-[var(--color-text-muted)]">
+                    <th className="pb-3 w-16">ID</th>
+                    <th className="pb-3 w-44">NGƯỜI DÙNG</th>
+                    <th className="pb-3">NỘI DUNG</th>
+                    <th className="pb-3 w-56">TRUYỆN & CHƯƠNG</th>
+                    <th className="pb-3 w-28">VỊ TRÍ</th>
+                    <th className="pb-3 w-28">THỜI GIAN</th>
+                    <th className="pb-3 w-20 text-right">THAO TÁC</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border-subtle)]">
+                  {commentsData.items.map((c) => (
+                    <tr key={c.id} className="hover:bg-[var(--color-bg-raised)]/40 transition-colors">
+                      <td className="py-3 text-[var(--color-text-muted)]">#{c.id}</td>
+                      <td className="py-3 font-medium text-[var(--color-text-primary)]">
+                        {c.user ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[var(--color-accent-gold)]/20 text-[var(--color-accent-gold)] flex items-center justify-center font-bold text-[10px]">
+                              {c.user.display_name?.[0] || 'U'}
+                            </div>
+                            <div className="flex flex-col">
+                              <span>{c.user.display_name}</span>
+                              <span className="text-[10px] text-[var(--color-text-muted)]">@{c.user.username}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[var(--color-text-muted)]">Vô danh</span>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        <div className="max-w-md">
+                          {c.is_spoiler && (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 mr-1.5">
+                              SPOILER
+                            </span>
+                          )}
+                          <span className="text-[var(--color-text-primary)] whitespace-pre-wrap line-clamp-3">
+                            {c.content}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 text-[var(--color-text-secondary)]">
+                        {c.novel_title ? (
+                          <div>
+                            <span className="font-medium text-[var(--color-text-primary)]">{c.novel_title}</span>
+                            {c.chapter_number && (
+                              <div className="text-[10px] text-[var(--color-text-muted)]">
+                                Chương {c.chapter_number}: {c.chapter_title || ''}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[var(--color-text-muted)]">Chương #{c.chapter_id}</span>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        {c.paragraph_index !== null && c.paragraph_index !== undefined ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--color-accent-gold)]/15 text-[var(--color-accent-gold)]">
+                            Đoạn #{c.paragraph_index + 1}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] text-[var(--color-text-muted)] bg-[var(--color-bg-deep)]">
+                            Chân chương
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-[var(--color-text-muted)]">
+                        {timeAgo(c.created_at)}
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Xóa bình luận #${c.id} của "${c.user?.display_name || 'người dùng'}"?`)) {
+                              deleteCommentMutation.mutate(c.id)
+                            }
+                          }}
+                          className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all cursor-pointer"
+                          title="Xóa bình luận vi phạm"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {/* Pagination */}
+            {commentsData && commentsData.total > 20 && (
+              <div className="flex items-center justify-between pt-4 mt-4 border-t border-[var(--color-border-subtle)] text-xs">
+                <button
+                  disabled={commentPage <= 1}
+                  onClick={() => setCommentPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 rounded bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40 transition-all cursor-pointer"
+                >
+                  Trang trước
+                </button>
+                <span className="text-[var(--color-text-muted)]">
+                  Trang {commentPage} / {Math.ceil(commentsData.total / 20)}
+                </span>
+                <button
+                  disabled={commentPage >= Math.ceil(commentsData.total / 20)}
+                  onClick={() => setCommentPage((p) => p + 1)}
+                  className="px-3 py-1.5 rounded bg-[var(--color-bg-deep)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-40 transition-all cursor-pointer"
+                >
+                  Trang sau
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -257,10 +257,11 @@ async def get_novel(slug: str, db: AsyncSession = Depends(get_db)):
     if not novel:
         raise HTTPException(status_code=404, detail="Không tìm thấy truyện")
 
-    # Tăng view tự nhiên
+    # Serialize dữ liệu trước khi commit để tránh expire ORM attributes
+    data = _serialize(novel)
     novel.views += 1
     await db.commit()
-    return _serialize(novel)
+    return data
 
 @router.get("/{slug}/chapters", response_model=list[ChapterMetaOut])
 async def get_chapters(slug: str, db: AsyncSession = Depends(get_db)):
