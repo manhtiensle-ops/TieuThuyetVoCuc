@@ -1,7 +1,8 @@
 import api from '@/lib/api-client'
 import type {
   Novel, Chapter, ChapterMeta, Comment, User,
-  PaginatedResponse, AuthTokens,
+  PaginatedResponse, AuthTokens, AdminStats,
+  NovelCreateInput, ChapterCreateInput,
 } from '@/types'
 
 // ── Novels ────────────────────────────────────────────────
@@ -74,4 +75,34 @@ export const usersApi = {
 
   removeFavorite: (novelId: number) =>
     api.delete(`/users/me/favorites/${novelId}`),
+}
+
+// ── Admin API ─────────────────────────────────────────────
+export const adminApi = {
+  getStats: () =>
+    api.get<AdminStats>('/admin/stats').then((r) => r.data),
+
+  listUsers: (params?: { page?: number; role?: string; q?: string }) =>
+    api.get<PaginatedResponse<User>>('/admin/users', { params }).then((r) => r.data),
+
+  updateUser: (userId: number, body: { role?: string; is_active?: boolean }) =>
+    api.patch<User>(`/admin/users/${userId}`, body).then((r) => r.data),
+
+  createNovel: (data: NovelCreateInput) =>
+    api.post<Novel>('/admin/novels', data).then((r) => r.data),
+
+  updateNovel: (novelId: number, data: Partial<NovelCreateInput>) =>
+    api.put<Novel>(`/admin/novels/${novelId}`, data).then((r) => r.data),
+
+  deleteNovel: (novelId: number) =>
+    api.delete(`/admin/novels/${novelId}`),
+
+  createChapter: (novelId: number, data: ChapterCreateInput) =>
+    api.post<Chapter>(`/admin/novels/${novelId}/chapters`, data).then((r) => r.data),
+
+  updateChapter: (chapterId: number, data: Partial<ChapterCreateInput>) =>
+    api.put<Chapter>(`/admin/chapters/${chapterId}`, data).then((r) => r.data),
+
+  deleteChapter: (chapterId: number) =>
+    api.delete(`/admin/chapters/${chapterId}`),
 }

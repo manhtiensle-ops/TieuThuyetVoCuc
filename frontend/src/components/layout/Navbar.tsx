@@ -12,6 +12,7 @@ import {
   Sparkles,
   Sun,
   Moon,
+  Shield,
 } from 'lucide-react'
 import { useAuthStore, useReaderStore } from '@/stores'
 import { cn } from '@/lib/utils'
@@ -58,6 +59,9 @@ export function Navbar() {
   const navLinks = [
     { name: 'Trang Chủ', path: '/', icon: Home },
     { name: 'Kho Truyện', path: '/novels', icon: BookOpen },
+    ...(isAuthenticated && (user?.role === 'admin' || user?.role === 'editor')
+      ? [{ name: 'Quản Trị', path: '/admin', icon: Shield }]
+      : []),
   ]
 
   return (
@@ -172,6 +176,16 @@ export function Navbar() {
           {/* User Auth Info */}
           {isAuthenticated && user ? (
             <div className="hidden sm:flex items-center gap-3">
+              {(user.role === 'admin' || user.role === 'editor') && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--color-accent-gold)]/15 border border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] hover:bg-[var(--color-accent-gold)] hover:text-black transition-all"
+                  title="Vào Trang Quản Trị"
+                >
+                  <Shield size={13} />
+                  <span>Admin</span>
+                </Link>
+              )}
               <Link
                 to={`/profile/${user.username}`}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] transition-all"
@@ -264,6 +278,15 @@ export function Navbar() {
                 <BookOpen size={16} className="text-[var(--color-accent-gold)]" />
                 Kho Truyện
               </Link>
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'editor') && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-accent-gold)] hover:bg-[var(--color-bg-raised)]"
+                >
+                  <Shield size={16} />
+                  Quản Trị CMS
+                </Link>
+              )}
             </nav>
 
             <div className="pt-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between">

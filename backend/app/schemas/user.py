@@ -25,10 +25,15 @@ class UserOut(BaseModel):
     avatar_url: str | None
     bio: str | None
     role: str
+    is_active: bool = True
     joined_at: datetime | None = None
     novels_read: int = 0
     chapters_read: int = 0
     comments_count: int = 0
+
+class UserUpdateAdmin(BaseModel):
+    role: str | None = None
+    is_active: bool | None = None
 
 class TokenOut(BaseModel):
     access_token: str

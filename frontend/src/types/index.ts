@@ -42,10 +42,35 @@ export interface User {
   avatar_url: string | null
   bio: string
   role: 'admin' | 'editor' | 'vip' | 'reader'
+  is_active?: boolean
   joined_at: string
   novels_read: number
   chapters_read: number
   comments_count: number
+}
+
+export interface AdminStats {
+  total_users: number
+  total_novels: number
+  total_chapters: number
+  total_views: number
+}
+
+export interface NovelCreateInput {
+  title: string
+  author: string
+  slug?: string
+  description?: string
+  cover_url?: string
+  status?: 'ongoing' | 'completed' | 'hiatus'
+  genres?: string[]
+}
+
+export interface ChapterCreateInput {
+  number: number
+  title: string
+  content: string
+  is_premium?: boolean
 }
 
 export interface Comment {

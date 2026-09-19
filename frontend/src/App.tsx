@@ -16,6 +16,7 @@ const ProfilePage  = lazy(() => import('@/pages/ProfilePage'))
 const LoginPage    = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const AdminPage    = lazy(() => import('@/pages/AdminPage'))
 
 function Loader() {
   return (
@@ -76,6 +77,14 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Suspense fallback={<Loader />}><RegisterPage /></Suspense>,
+  },
+  {
+    path: '/admin',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><AdminPage /></Suspense>
+      </MainLayout>
+    ),
   },
   {
     path: '*',
