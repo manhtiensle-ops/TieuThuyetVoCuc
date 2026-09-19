@@ -59,14 +59,18 @@ def _parse_chapter_file(file_path: Path) -> dict[str, Any]:
             pass
 
     # 2. Xác định số chương và tiêu đề
-    # Mẫu tên file: 001-ten-chuong.md hoặc chap-1.md hoặc 1.txt
+    # Mẫu tên file: 001-ten-chuong.md hoặc chap-1.md hoặc chapter_001.md hoặc 1.txt
     filename = file_path.stem
     number_from_name = None
-    num_match = re.match(r"^(?:chap(?:ter)?[-_\s]*)?(\d+)", filename, re.IGNORECASE)
+    num_match = re.search(r"(\d+)", filename)
     if num_match:
         number_from_name = int(num_match.group(1))
 
-    chapter_number = frontmatter.get("number", number_from_name or 1)
+    chapter_number = frontmatter.get("number")
+    if chapter_number is None:
+        chapter_number = frontmatter.get("chapter_num")
+    if chapter_number is None:
+        chapter_number = number_from_name or 1
     
     # Tiêu đề từ frontmatter hoặc từ dòng đầu '# Tiêu đề' hoặc từ tên file
     title = frontmatter.get("title")
@@ -80,6 +84,17 @@ def _parse_chapter_file(file_path: Path) -> dict[str, Any]:
             # Lấy phần còn lại của tên file
             title_part = re.sub(r"^(?:chap(?:ter)?[-_\s]*)?\d+[-_\s]*", "", filename)
             title = title_part.replace("-", " ").replace("_", " ").title() if title_part else f"Chương {chapter_number}"
+    else:
+        # Làm sạch các dòng tiêu đề trùng lặp và đường kẻ ở đầu body
+        lines = body.strip().split("\n")
+        idx = 0
+        while idx < len(lines):
+            line_str = lines[idx].strip()
+            if not line_str or line_str.startswith("#") or line_str == "---":
+                idx += 1
+            else:
+                break
+        body = "\n".join(lines[idx:])
 
     is_premium = bool(frontmatter.get("is_premium", False))
     html_content = _markdown_to_html(body)
@@ -166,6 +181,9 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
     for ndir in novel_dirs:
         slug = ndir.name
         meta_file = ndir / "metadata.json"
+        if not meta_file.exists() and (ndir / "state" / "novel_meta.json").exists():
+            meta_file = ndir / "state" / "novel_meta.json"
+
         meta = {}
         if meta_file.exists():
             try:
@@ -173,12 +191,12 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
             except Exception:
                 pass
 
-        title = normalize_text(meta.get("title", slug.replace("-", " ").title()))
-        author = normalize_text(meta.get("author", "Khuyết Danh"))
-        description = normalize_text(meta.get("description", ""))
+        title = normalize_text(meta.get("title") or meta.get("project_title") or slug.replace("-", " ").title())
+        author = normalize_text(meta.get("author") or "Nazzz Sunny")
+        description = normalize_text(meta.get("description") or meta.get("synopsis") or "")
         cover_url = meta.get("cover_url")
         status = meta.get("status", "ongoing")
-        genres = [normalize_text(g) for g in meta.get("genres", ["Huyền Huyễn"])]
+        genres = [normalize_text(g) for g in meta.get("genres", ["Khoa Huyễn", "Dị Năng"])]
 
         # Tìm hoặc tạo Novel trong DB
         novel = (await db.execute(
@@ -221,10 +239,12 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
         await db.flush()
 
         # Quét các file chương (.md hoặc .txt)
-        chapter_files = sorted(
-            [f for f in ndir.iterdir() if f.is_file() and f.suffix.lower() in [".md", ".txt"] and not f.name.startswith(".")],
-            key=lambda p: p.name,
-        )
+        search_dir = ndir
+        if (ndir / "chapters").exists() and (ndir / "chapters").is_dir():
+            search_dir = ndir / "chapters"
+
+        raw_files = [f for f in search_dir.iterdir() if f.is_file() and f.suffix.lower() in [".md", ".txt"] and not f.name.startswith(".")]
+        chapter_files = sorted(raw_files, key=lambda p: p.name)
 
         ch_count = 0
         for cfile in chapter_files:
