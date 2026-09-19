@@ -357,6 +357,7 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
   const { theme, fontSize, lineHeight, fontFamily } = useReaderStore()
   const { setReaderControlsVisible } = useUIStore()
   const [tocOpen, setTocOpen] = useState(false)
+  const [tocSearch, setTocSearch] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedParagraphIndex, setSelectedParagraphIndex] = useState<number | null>(null)
   const [selectedParagraphText, setSelectedParagraphText] = useState<string | undefined>(undefined)
@@ -368,6 +369,15 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
   const paragraphs = useMemo(() => {
     return parseContentParagraphs(chapter.content)
   }, [chapter.content])
+
+  // Filter TOC chapters in reader drawer
+  const filteredTocChapters = useMemo(() => {
+    if (!tocSearch.trim()) return chapters
+    const q = tocSearch.trim().toLowerCase()
+    return chapters.filter(
+      (c) => c.title.toLowerCase().includes(q) || String(c.number).includes(q)
+    )
+  }, [chapters, tocSearch])
 
   // Fetch comments summary
   const fetchSummary = useCallback(async () => {
@@ -588,13 +598,32 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
               }}
             >
               <div className="p-6">
-                <p
-                  style={{ fontFamily: 'var(--font-display)', fontSize: '10px', letterSpacing: '3px', color: 'var(--color-accent-gold)', marginBottom: '16px' }}
-                >
-                  MỤC LỤC
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <p
+                    style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '2px', color: 'var(--color-accent-gold)' }}
+                  >
+                    MỤC LỤC ({chapters.length})
+                  </p>
+                  <button
+                    onClick={() => setTocOpen(false)}
+                    className="p-1 rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={tocSearch}
+                    onChange={(e) => setTocSearch(e.target.value)}
+                    placeholder="Tìm số hoặc tên chương..."
+                    className="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent-gold)] font-ui"
+                  />
+                </div>
+
                 <ul className="space-y-1">
-                  {chapters.map((ch) => (
+                  {filteredTocChapters.map((ch) => (
                     <li key={ch.id}>
                       <Link
                         to={`/novels/${novel.slug}/chapters/${ch.number}`}
@@ -609,9 +638,9 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
                         }}
                       >
                         <span style={{ fontFamily: 'var(--font-display)', fontSize: '9px', color: 'var(--color-accent-gold)', minWidth: '28px' }}>
-                          {ch.number}
+                          #{ch.number}
                         </span>
-                        <span className="line-clamp-1">{ch.title}</span>
+                        <span className="line-clamp-2 leading-snug">{ch.title}</span>
                         {ch.is_premium && (
                           <span className="ml-auto text-xs px-1.5 py-0.5 rounded"
                             style={{ background: 'rgba(201,168,76,0.15)', color: 'var(--color-accent-gold)', fontFamily: 'var(--font-display)', fontSize: '8px', letterSpacing: '1px' }}>
@@ -621,6 +650,11 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
                       </Link>
                     </li>
                   ))}
+                  {filteredTocChapters.length === 0 && (
+                    <p className="text-xs text-[var(--color-text-muted)] py-4 text-center">
+                      Không tìm thấy chương nào
+                    </p>
+                  )}
                 </ul>
               </div>
             </motion.aside>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,6 +11,9 @@ import {
   Star,
   Home,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   ArrowUpDown,
   Search,
   Sparkles,
@@ -22,6 +25,8 @@ import {
   User as UserIcon,
   Tag,
   Loader2,
+  Compass,
+  ArrowRight,
 } from 'lucide-react'
 import { formatCount, normalizeNFC } from '@/lib/utils'
 
@@ -78,6 +83,90 @@ export default function NovelPage() {
     list.sort((a, b) => (sortOrder === 'asc' ? a.number - b.number : b.number - a.number))
     return list
   }, [chapters, sortOrder, chapterSearch])
+
+  // Pagination & Quick Jump State (10 chapters per page)
+  const pageSize = 10
+  const [currentPage, setCurrentPage] = useState(1)
+  const [jumpChapterInput, setJumpChapterInput] = useState('')
+  const [jumpMessage, setJumpMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+  const [highlightedChapterNumber, setHighlightedChapterNumber] = useState<number | null>(null)
+
+  // Reset pagination when search or sort order changes
+  useEffect(() => {
+    setCurrentPage(1)
+    setJumpMessage(null)
+  }, [chapterSearch, sortOrder])
+
+  const totalFilteredChapters = sortedChapters.length
+  const totalPages = Math.max(1, Math.ceil(totalFilteredChapters / pageSize))
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages)
+
+  const paginatedChapters = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize
+    return sortedChapters.slice(start, start + pageSize)
+  }, [sortedChapters, safeCurrentPage, pageSize])
+
+  const chapterBatches = useMemo(() => {
+    const batches: { page: number; label: string; startCh: number; endCh: number }[] = []
+    for (let p = 1; p <= totalPages; p++) {
+      const startIdx = (p - 1) * pageSize
+      const endIdx = Math.min(p * pageSize, totalFilteredChapters)
+      if (startIdx < totalFilteredChapters) {
+        const startCh = sortedChapters[startIdx]?.number
+        const endCh = sortedChapters[endIdx - 1]?.number
+        const label =
+          startCh === endCh
+            ? `Chương ${startCh}`
+            : `Chương ${Math.min(startCh, endCh)} - ${Math.max(startCh, endCh)}`
+        batches.push({ page: p, label, startCh, endCh })
+      }
+    }
+    return batches
+  }, [totalPages, totalFilteredChapters, sortedChapters, pageSize])
+
+  const handleJumpToChapter = (e?: React.FormEvent, directRead = false) => {
+    if (e) e.preventDefault()
+    setJumpMessage(null)
+    const targetNum = parseInt(jumpChapterInput.trim(), 10)
+    if (isNaN(targetNum) || targetNum <= 0) {
+      setJumpMessage({ type: 'error', text: 'Vui lòng nhập số chương hợp lệ' })
+      return
+    }
+
+    const foundChapter = chapters.find((c) => c.number === targetNum)
+    if (!foundChapter) {
+      setJumpMessage({ type: 'error', text: `Truyện chưa có chương #${targetNum}` })
+      return
+    }
+
+    if (directRead) {
+      window.location.href = `/novels/${slug}/chapters/${targetNum}`
+      return
+    }
+
+    if (chapterSearch.trim()) {
+      const isInFiltered = sortedChapters.some((c) => c.number === targetNum)
+      if (!isInFiltered) {
+        setChapterSearch('')
+      }
+    }
+
+    const targetIndex = sortedChapters.findIndex((c) => c.number === targetNum)
+    const targetPage = targetIndex >= 0 ? Math.floor(targetIndex / pageSize) + 1 : 1
+    setCurrentPage(targetPage)
+    setHighlightedChapterNumber(targetNum)
+    setJumpMessage({
+      type: 'success',
+      text: `Đã chuyển đến trang ${targetPage} (chứa Chương #${targetNum})`,
+    })
+
+    setTimeout(() => {
+      const el = document.getElementById(`chapter-card-${targetNum}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 150)
+  }
 
   const latestChapter = useMemo(() => {
     if (!chapters.length) return null
@@ -164,7 +253,7 @@ export default function NovelPage() {
     )
 
   return (
-    <PageWrapper className="min-h-screen pb-20 font-ui" style={{ background: 'var(--color-bg-deep)' }}>
+    <PageWrapper className="min-h-screen pb-36 font-ui" style={{ background: 'var(--color-bg-deep)' }}>
       {/* Breadcrumb */}
       <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-20 pb-2 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
         <Link to="/" className="flex items-center gap-1 hover:text-[var(--color-accent-gold)] transition-colors">
@@ -345,12 +434,15 @@ export default function NovelPage() {
         </div>
 
         {/* Chapter List Header & Controls */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--color-border-subtle)]">
             <div className="flex items-center gap-2">
               <h2 className="text-xs font-display font-semibold tracking-[2px] text-[var(--color-accent-gold)]">
                 MỤC LỤC CHƯƠNG ({chapters.length})
               </h2>
+              <span className="text-[11px] text-[var(--color-text-muted)] font-ui">
+                • 10 chap / lần
+              </span>
             </div>
 
             {/* Sort order & Search */}
@@ -379,42 +471,241 @@ export default function NovelPage() {
               </button>
             </div>
           </div>
+
+          {/* Quick Select & Jump Chapter Toolbar */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
+            {/* Range Selector Dropdown */}
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs text-[var(--color-text-muted)] font-ui whitespace-nowrap flex items-center gap-1.5">
+                <Compass size={14} className="text-[var(--color-accent-gold)]" /> Chọn tập:
+              </span>
+              <select
+                value={safeCurrentPage}
+                onChange={(e) => {
+                  setCurrentPage(Number(e.target.value))
+                  setHighlightedChapterNumber(null)
+                  setJumpMessage(null)
+                }}
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-ui focus:outline-none focus:border-[var(--color-accent-gold)] cursor-pointer"
+              >
+                {chapterBatches.map((b) => (
+                  <option key={b.page} value={b.page}>
+                    Trang {b.page} ({b.label})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Direct Chapter Number Input & Quick Jump */}
+            <form
+              onSubmit={(e) => handleJumpToChapter(e, false)}
+              className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+            >
+              <div className="relative flex-1 sm:w-44">
+                <input
+                  type="number"
+                  min="1"
+                  max={chapters.length > 0 ? Math.max(...chapters.map((c) => c.number)) : 9999}
+                  value={jumpChapterInput}
+                  onChange={(e) => setJumpChapterInput(e.target.value)}
+                  placeholder={`Nhập số chap (1-${chapters.length})...`}
+                  className="w-full px-3 py-1.5 rounded-xl text-xs bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent-gold)] font-ui"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium font-ui bg-[var(--color-bg-raised)] hover:bg-[var(--color-accent-gold)] hover:text-black border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] text-[var(--color-text-primary)] transition-all whitespace-nowrap"
+              >
+                Đến chap
+              </button>
+              {jumpChapterInput.trim() && (
+                <button
+                  type="button"
+                  onClick={(e) => handleJumpToChapter(e, true)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold font-ui bg-[var(--color-accent-gold)] text-black hover:bg-[var(--color-accent-gold)]/90 transition-all flex items-center gap-1 whitespace-nowrap"
+                >
+                  <span>Đọc ngay #{jumpChapterInput.trim()}</span>
+                  <ArrowRight size={12} />
+                </button>
+              )}
+            </form>
+          </div>
+
+          {/* Jump feedback notice if any */}
+          {jumpMessage && (
+            <div
+              className={`text-xs px-3 py-2 rounded-xl flex items-center gap-2 ${
+                jumpMessage.type === 'error'
+                  ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              }`}
+            >
+              {jumpMessage.type === 'error' ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
+              <span>{jumpMessage.text}</span>
+            </div>
+          )}
+
+          {/* Horizontal Quick Batch Pills (Scrollable) */}
+          {chapterBatches.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar scroll-smooth">
+              {chapterBatches.map((b) => {
+                const isActive = b.page === safeCurrentPage
+                return (
+                  <button
+                    key={b.page}
+                    onClick={() => {
+                      setCurrentPage(b.page)
+                      setHighlightedChapterNumber(null)
+                      setJumpMessage(null)
+                    }}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? 'bg-[var(--color-accent-gold)] text-black font-semibold shadow-sm'
+                        : 'bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent-gold)] hover:bg-[var(--color-bg-raised)] border border-[var(--color-border-subtle)]'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Chapter Grid */}
-        {sortedChapters.length > 0 ? (
-          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-            {sortedChapters.map((ch) => (
-              <Link
-                key={ch.id}
-                to={`/novels/${slug}/chapters/${ch.number}`}
-                className="group flex items-center justify-between p-3.5 rounded-xl bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] hover:bg-[var(--color-bg-raised)]/60 transition-all duration-200"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className="flex-shrink-0 px-2 py-1 rounded text-[10px] font-bold text-[var(--color-accent-gold)] bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] group-hover:border-[var(--color-accent-gold)]/40 transition-colors"
-                    style={{ fontFamily: 'var(--font-display)', minWidth: '38px', textAlign: 'center' }}
+        {/* Chapter Grid (Only 10 chapters rendered at once) */}
+        {paginatedChapters.length > 0 ? (
+          <div className="space-y-4">
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
+              {paginatedChapters.map((ch) => {
+                const isHighlighted = highlightedChapterNumber === ch.number
+                return (
+                  <Link
+                    key={ch.id}
+                    id={`chapter-card-${ch.number}`}
+                    to={`/novels/${slug}/chapters/${ch.number}`}
+                    className={`group flex items-center justify-between p-3.5 rounded-xl bg-[var(--color-bg-surface)] border transition-all duration-200 ${
+                      isHighlighted
+                        ? 'border-[var(--color-accent-gold)] ring-2 ring-[var(--color-accent-gold)]/50 bg-[var(--color-bg-raised)] shadow-lg'
+                        : 'border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] hover:bg-[var(--color-bg-raised)]/60'
+                    }`}
                   >
-                    #{ch.number}
-                  </span>
-                  <span className="truncate text-xs font-medium text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-gold)] transition-colors">
-                    {normalizeNFC(ch.title)}
-                  </span>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <span
+                        className="flex-shrink-0 px-2 py-1.5 rounded text-[11px] font-bold text-[var(--color-accent-gold)] bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] group-hover:border-[var(--color-accent-gold)]/40 transition-colors"
+                        style={{ fontFamily: 'var(--font-display)', minWidth: '40px', textAlign: 'center' }}
+                      >
+                        #{ch.number}
+                      </span>
+                      <span className="text-xs font-medium text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-gold)] transition-colors line-clamp-2 leading-relaxed break-words">
+                        {normalizeNFC(ch.title)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                      {ch.is_premium && (
+                        <span className="text-[8px] font-display font-semibold tracking-wider text-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/10 border border-[var(--color-accent-gold)]/30 px-1.5 py-0.5 rounded">
+                          VIP
+                        </span>
+                      )}
+                      <ChevronRight
+                        size={14}
+                        className="text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-gold)] group-hover:translate-x-0.5 transition-all"
+                      />
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Bottom Pagination Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[var(--color-border-subtle)]">
+              <span className="text-xs text-[var(--color-text-muted)] font-ui order-2 sm:order-1">
+                Hiển thị <span className="text-[var(--color-text-primary)] font-semibold">{(safeCurrentPage - 1) * pageSize + 1} - {Math.min(safeCurrentPage * pageSize, totalFilteredChapters)}</span> trong tổng số <span className="text-[var(--color-text-primary)] font-semibold">{totalFilteredChapters}</span> chương
+              </span>
+
+              <div className="flex items-center gap-1.5 order-1 sm:order-2 flex-wrap justify-center">
+                <button
+                  onClick={() => {
+                    setCurrentPage(1)
+                    setHighlightedChapterNumber(null)
+                  }}
+                  disabled={safeCurrentPage === 1}
+                  className="p-1.5 rounded-lg text-xs font-ui bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Trang đầu"
+                >
+                  <ChevronsLeft size={14} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1))
+                    setHighlightedChapterNumber(null)
+                  }}
+                  disabled={safeCurrentPage === 1}
+                  aria-label="Trang trước"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-ui bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                  <span>Trước</span>
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      if (totalPages <= 7) return true
+                      return p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1
+                    })
+                    .map((p, idx, arr) => {
+                      const prev = arr[idx - 1]
+                      const showEllipsis = prev && p - prev > 1
+                      return (
+                        <div key={p} className="flex items-center gap-1">
+                          {showEllipsis && <span className="text-xs text-[var(--color-text-muted)] px-1">…</span>}
+                          <button
+                            onClick={() => {
+                              setCurrentPage(p)
+                              setHighlightedChapterNumber(null)
+                            }}
+                            className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-medium font-ui transition-all ${
+                              p === safeCurrentPage
+                                ? 'bg-[var(--color-accent-gold)] text-black font-bold shadow'
+                                : 'bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent-gold)] border border-[var(--color-border-subtle)]'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </div>
+                      )
+                    })}
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                  {ch.is_premium && (
-                    <span className="text-[8px] font-display font-semibold tracking-wider text-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/10 border border-[var(--color-accent-gold)]/30 px-1.5 py-0.5 rounded">
-                      VIP
-                    </span>
-                  )}
-                  <ChevronRight
-                    size={13}
-                    className="text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-gold)] transition-colors"
-                  />
-                </div>
-              </Link>
-            ))}
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    setHighlightedChapterNumber(null)
+                  }}
+                  disabled={safeCurrentPage === totalPages}
+                  aria-label="Trang sau"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-ui bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <span>Sau</span>
+                  <ChevronRight size={14} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentPage(totalPages)
+                    setHighlightedChapterNumber(null)
+                  }}
+                  disabled={safeCurrentPage === totalPages}
+                  className="p-1.5 rounded-lg text-xs font-ui bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Trang cuối"
+                >
+                  <ChevronsRight size={14} />
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="p-8 text-center rounded-2xl bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
