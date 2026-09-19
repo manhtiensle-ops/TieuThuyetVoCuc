@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PageWrapper } from '@/components/novel/NovelCard'
-import { NovelCard } from '@/components/novel/NovelCard'
+import { PageWrapper, NovelCard } from '@/components/novel/NovelCard'
 import { novelsApi } from '@/api'
-import { Search } from 'lucide-react'
+import { Search, Home } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const GENRES = ['Kiếm Hiệp', 'Huyền Huyễn', 'Ngôn Tình', 'Tiên Hiệp', 'Đô Thị', 'Hệ Thống', 'Khoa Huyễn']
 
@@ -19,6 +19,16 @@ export default function NovelsPage() {
 
   return (
     <PageWrapper className="min-h-screen px-6 py-24 max-w-7xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] mb-6" style={{ fontFamily: 'var(--font-ui)' }}>
+        <Link to="/" className="flex items-center gap-1 hover:text-[var(--color-accent-gold)] transition-colors">
+          <Home size={13} className="text-[var(--color-accent-gold)]" />
+          <span>Trang Chủ</span>
+        </Link>
+        <span>/</span>
+        <span className="text-[var(--color-text-secondary)] font-medium">Kho Truyện</span>
+      </div>
+
       <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '3rem', fontWeight: 300, color: 'var(--color-text-primary)', marginBottom: '2rem' }}>
         Kho Truyện
       </h1>

@@ -62,13 +62,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Footer */}
-      <footer className="py-12 px-6 text-center" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: '9px', letterSpacing: '3px', color: 'var(--color-text-muted)' }}>
-          © 2026 NOVEL PLATFORM · THƯ VIỆN VÔ CỰC
-        </p>
-      </footer>
     </PageWrapper>
   )
 }

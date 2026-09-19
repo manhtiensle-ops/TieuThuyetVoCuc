@@ -1,9 +1,8 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
 import { PageWrapper } from '@/components/novel/NovelCard'
 import { novelsApi } from '@/api'
-import { BookOpen, Eye, Star } from 'lucide-react'
+import { BookOpen, Eye, Star, Home, ChevronRight } from 'lucide-react'
 import { formatCount } from '@/lib/utils'
 
 export default function NovelPage() {
@@ -31,6 +30,20 @@ export default function NovelPage() {
 
   return (
     <PageWrapper className="min-h-screen" style={{ background: 'var(--color-bg-deep)' }}>
+      {/* Breadcrumb */}
+      <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-20 pb-2 flex items-center gap-2 text-xs text-[var(--color-text-muted)]" style={{ fontFamily: 'var(--font-ui)' }}>
+        <Link to="/" className="flex items-center gap-1 hover:text-[var(--color-accent-gold)] transition-colors">
+          <Home size={13} className="text-[var(--color-accent-gold)]" />
+          <span>Trang Chủ</span>
+        </Link>
+        <ChevronRight size={12} />
+        <Link to="/novels" className="hover:text-[var(--color-accent-gold)] transition-colors">
+          Kho Truyện
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-[var(--color-text-secondary)] font-medium truncate max-w-xs">{novel.title}</span>
+      </div>
+
       {/* Hero banner */}
       <div className="relative overflow-hidden" style={{ height: '380px' }}>
         {novel.cover_url && (

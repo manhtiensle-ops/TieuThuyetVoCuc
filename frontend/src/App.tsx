@@ -4,6 +4,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Suspense, lazy } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { MainLayout } from '@/components/layout/MainLayout'
 import '@/styles/globals.css'
 
 // Lazy pages
@@ -32,14 +33,58 @@ function Loader() {
 }
 
 const router = createBrowserRouter([
-  { path: '/',                              element: <Suspense fallback={<Loader />}><HomePage /></Suspense> },
-  { path: '/novels',                        element: <Suspense fallback={<Loader />}><NovelsPage /></Suspense> },
-  { path: '/novels/:slug',                  element: <Suspense fallback={<Loader />}><NovelPage /></Suspense> },
-  { path: '/novels/:slug/chapters/:number', element: <Suspense fallback={<Loader />}><ChapterPage /></Suspense> },
-  { path: '/profile/:username',             element: <Suspense fallback={<Loader />}><ProfilePage /></Suspense> },
-  { path: '/login',                         element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
-  { path: '/register',                      element: <Suspense fallback={<Loader />}><RegisterPage /></Suspense> },
-  { path: '*',                              element: <Suspense fallback={<Loader />}><NotFoundPage /></Suspense> },
+  {
+    path: '/',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><HomePage /></Suspense>
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/novels',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><NovelsPage /></Suspense>
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/novels/:slug',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><NovelPage /></Suspense>
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/novels/:slug/chapters/:number',
+    element: <Suspense fallback={<Loader />}><ChapterPage /></Suspense>,
+  },
+  {
+    path: '/profile/:username',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><ProfilePage /></Suspense>
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/login',
+    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense>,
+  },
+  {
+    path: '/register',
+    element: <Suspense fallback={<Loader />}><RegisterPage /></Suspense>,
+  },
+  {
+    path: '*',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><NotFoundPage /></Suspense>
+      </MainLayout>
+    ),
+  },
 ])
 
 const queryClient = new QueryClient({

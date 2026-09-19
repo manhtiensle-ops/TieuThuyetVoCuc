@@ -42,8 +42,14 @@ export default function RegisterPage() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-sm"
       >
-        <div className="text-center mb-10">
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '3px', color: 'var(--color-accent-gold)', marginBottom: '12px' }}>THƯ VIỆN VÔ CỰC</p>
+        <div className="text-center mb-8">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-xs hover:text-[var(--color-accent-gold)] transition-colors mb-3"
+            style={{ fontFamily: 'var(--font-display)', letterSpacing: '3px', color: 'var(--color-accent-gold)' }}
+          >
+            ← VỀ TRANG CHỦ
+          </Link>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.5rem', fontWeight: 400, color: 'var(--color-text-primary)' }}>Đăng Ký</h1>
         </div>
 

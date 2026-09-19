@@ -1,9 +1,9 @@
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { PageWrapper } from '@/components/novel/NovelCard'
 import { usersApi } from '@/api'
-import { BookOpen, MessageSquare, Calendar } from 'lucide-react'
+import { BookOpen, MessageSquare, Calendar, Home, ChevronRight } from 'lucide-react'
 import { timeAgo } from '@/lib/utils'
 import { NovelCard } from '@/components/novel/NovelCard'
 
@@ -26,6 +26,16 @@ export default function ProfilePage() {
 
   return (
     <PageWrapper className="min-h-screen" style={{ background: 'var(--color-bg-deep)' }}>
+      {/* Breadcrumb */}
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-2 flex items-center gap-2 text-xs text-[var(--color-text-muted)]" style={{ fontFamily: 'var(--font-ui)' }}>
+        <Link to="/" className="flex items-center gap-1 hover:text-[var(--color-accent-gold)] transition-colors">
+          <Home size={13} className="text-[var(--color-accent-gold)]" />
+          <span>Trang Chủ</span>
+        </Link>
+        <ChevronRight size={12} />
+        <span className="text-[var(--color-text-secondary)] font-medium">Hồ Sơ: {user.display_name}</span>
+      </div>
+
       {/* Profile hero */}
       <div className="relative py-24 px-6 overflow-hidden">
         {/* Particle bg placeholder */}

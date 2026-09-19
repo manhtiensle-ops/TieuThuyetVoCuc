@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings, List, Sun, Moon, BookOpen, Home } from 'lucide-react'
 import { useReaderStore, useUIStore } from '@/stores'
 import { cn, normalizeNFC } from '@/lib/utils'
 import type { Chapter, ChapterMeta } from '@/types'
@@ -93,31 +93,46 @@ function ReaderControls({
       <motion.header
         animate={{ y: readerControlsVisible ? 0 : -80 }}
         transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-        className="fixed top-0.5 left-0 right-0 z-40 px-6 py-4 flex items-center justify-between"
-        style={{
-          background: 'linear-gradient(to bottom, var(--color-bg-deep), transparent)',
-        }}
+        className="fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between backdrop-blur-md bg-[var(--color-bg-deep)]/90 border-b border-[var(--color-border-subtle)]"
       >
-        <Link
-          to={`/novels/${novel.slug}`}
-          className="flex items-center gap-2 link-ink"
-          style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '1.5px', color: 'var(--color-text-secondary)' }}
-        >
-          <ChevronLeft size={14} />
-          {novel.title}
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Nút Về Trang Chủ */}
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all hover:bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] border border-transparent hover:border-[var(--color-border-subtle)]"
+            title="Trở về Trang Chủ"
+            style={{ fontFamily: 'var(--font-ui)' }}
+          >
+            <Home size={15} className="text-[var(--color-accent-gold)]" />
+            <span className="hidden sm:inline font-medium">Trang Chủ</span>
+          </Link>
 
+          <span className="text-[var(--color-border-subtle)]">/</span>
+
+          {/* Link về tiểu thuyết */}
+          <Link
+            to={`/novels/${novel.slug}`}
+            className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-accent-gold)] transition-colors max-w-[150px] sm:max-w-[240px] truncate"
+            style={{ fontFamily: 'var(--font-ui)' }}
+            title={`Về trang giới thiệu: ${novel.title}`}
+          >
+            <span className="truncate">{novel.title}</span>
+          </Link>
+        </div>
+
+        {/* Tiêu đề chương trung tâm */}
         <span
-          style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', color: 'var(--color-text-primary)' }}
+          className="hidden md:block truncate max-w-sm px-4 text-center font-medium"
+          style={{ fontFamily: 'var(--font-heading)', fontSize: '0.95rem', color: 'var(--color-text-primary)' }}
         >
-          Chương {chapter.number}: {chapter.title}
+          Chương {chapter.number}: {normalizeNFC(chapter.title)}
         </span>
 
-        <div className="flex items-center gap-3">
-          <button onClick={onTocOpen} className="reader-icon-btn" aria-label="Mục lục">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button onClick={onTocOpen} className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)] transition-all" aria-label="Mục lục" title="Mục lục chương">
             <List size={18} />
           </button>
-          <button onClick={() => setSettingsOpen((p) => !p)} className="reader-icon-btn" aria-label="Cài đặt đọc">
+          <button onClick={() => setSettingsOpen((p) => !p)} className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)] transition-all" aria-label="Cài đặt đọc" title="Tùy chỉnh giao diện">
             <Settings size={18} />
           </button>
         </div>
@@ -249,9 +264,15 @@ function ReaderControls({
       <motion.nav
         animate={{ y: readerControlsVisible ? 0 : 80 }}
         transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-4 py-4 px-6"
-        style={{ background: 'linear-gradient(to top, var(--color-bg-deep), transparent)' }}
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-3 sm:gap-4 py-3 sm:py-4 px-4 sm:px-6 backdrop-blur-sm bg-[var(--color-bg-deep)]/80 border-t border-[var(--color-border-subtle)]"
       >
+        <Link
+          to="/"
+          className="p-2 rounded-full transition-all hover:bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-accent-gold)]"
+          title="Trở về Trang Chủ"
+        >
+          <Home size={18} />
+        </Link>
         {prevChapter ? (
           <Link
             to={`/novels/${novel.slug}/chapters/${prevChapter.number}`}
