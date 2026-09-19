@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PageWrapper } from '@/components/novel/NovelCard'
+import { PageWrapper, BookCover } from '@/components/novel/NovelCard'
 import { novelsApi } from '@/api'
 import { useAuthStore } from '@/stores'
 import {
@@ -272,27 +272,19 @@ export default function NovelPage() {
       <div className="border-b border-[var(--color-border-subtle)] pb-12 pt-6">
         <div className="max-w-5xl mx-auto px-6 sm:px-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
           {/* Book Cover */}
-          <div
-            className="w-48 sm:w-56 flex-shrink-0 rounded-lg overflow-hidden border border-[var(--color-border-medium)] shadow-2xl relative"
-            style={{ aspectRatio: '2/3' }}
-          >
-            {novel.cover_url ? (
-              <img
-                src={novel.cover_url.startsWith('/') ? `http://localhost:8000${novel.cover_url}` : novel.cover_url}
-                alt={novel.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div
-                className="w-full h-full flex flex-col items-center justify-center p-6 text-center"
-                style={{ background: 'linear-gradient(145deg, var(--color-bg-surface) 0%, var(--color-bg-deep) 100%)' }}
-              >
-                <Sparkles size={24} className="text-[var(--color-accent-gold)] mb-2" />
-                <span className="text-xs font-heading font-medium text-[var(--color-text-primary)]">
-                  {novel.title}
-                </span>
-              </div>
-            )}
+          <div className="w-48 sm:w-56 flex-shrink-0">
+            <BookCover
+              title={novel.title}
+              author={novel.author}
+              coverUrl={novel.cover_url}
+              genres={novel.genres}
+              status={novel.status}
+              size="lg"
+              aspectRatio="2/3"
+              showBadge={true}
+              showSpine={true}
+              priority={true}
+            />
           </div>
 
           {/* Book Meta Details */}

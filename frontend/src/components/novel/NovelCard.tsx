@@ -150,6 +150,10 @@ export function LandingHero() {
   )
 }
 
+import { BookCover } from './BookCover'
+
+export { BookCover }
+
 // ── Novel Card ─────────────────────────────────────────────────────────────────
 interface NovelCardProps {
   id?: number
@@ -163,106 +167,71 @@ interface NovelCardProps {
   tags?: string[]
 }
 
-const statusLabel = { ongoing: 'Đang Ra', completed: 'Hoàn', hiatus: 'Tạm Ngưng' }
-const statusColor  = { ongoing: '#34d399', completed: '#C9A84C', hiatus: '#94a3b8' }
-
 export function NovelCard({ title, author, cover_url, slug, status, total_chapters, views, tags }: NovelCardProps) {
   return (
     <motion.div
-      whileHover={{ y: -6, scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      className="relative group cursor-pointer"
+      whileHover={{ y: -5, scale: 1.02 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+      className="relative group cursor-pointer flex flex-col h-full"
       style={{ perspective: '800px' }}
     >
-      <Link to={`/novels/${slug}`} className="block">
-        {/* Book cover — 2:3 ratio */}
-        <div
-          className="relative overflow-hidden rounded-sm"
-          style={{ aspectRatio: '2/3', boxShadow: '4px 8px 24px rgba(0,0,0,0.5), -2px 0 8px rgba(0,0,0,0.3)' }}
-        >
-          {cover_url ? (
-            <img
-              src={cover_url}
-              alt={title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div
-              className="w-full h-full flex items-end p-4"
-              style={{
-                background: 'linear-gradient(160deg, #1A2C4A 0%, #0D0F1A 50%, #2C1A4A 100%)',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '1.1rem',
-                  color: 'var(--color-text-primary)',
-                  lineHeight: 1.3,
-                }}
-              >
-                {title}
-              </span>
-            </div>
-          )}
+      <Link to={`/novels/${slug}`} className="flex flex-col h-full">
+        {/* Book cover — 2:3 ratio with dynamic fallback and 3D spine */}
+        <BookCover
+          title={title}
+          author={author}
+          coverUrl={cover_url}
+          genres={tags}
+          status={status}
+          aspectRatio="2/3"
+          size="md"
+          showBadge={true}
+          showSpine={true}
+        />
 
-          {/* Spine shadow */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-3 pointer-events-none"
-            style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5), transparent)' }}
-          />
-
-          {/* Status ribbon */}
-          <div
-            className="absolute top-2 right-0 px-2 py-0.5 text-xs font-semibold"
-            style={{
-              background: statusColor[status],
-              color: '#000',
-              fontFamily: 'var(--font-display)',
-              fontSize: '8px',
-              letterSpacing: '1px',
-              borderRadius: '2px 0 0 2px',
-            }}
-          >
-            {statusLabel[status]}
-          </div>
-
-          {/* Gold overlay on hover */}
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, rgba(201,168,76,0.15), transparent 60%)' }}
-          />
-        </div>
-
-        {/* Meta */}
-        <div className="mt-3 px-0.5">
+        {/* Standardized Meta with Fixed Baseline Alignment */}
+        <div className="mt-2.5 px-0.5 flex flex-col flex-1 justify-between">
+          {/* Title: fixed 2-line height box (height: 2.7em) so every single card aligns perfectly */}
           <h3
-            className="line-clamp-2 mb-1"
+            className="font-heading font-semibold text-[13.5px] sm:text-sm text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-gold)] transition-colors duration-200"
+            title={title}
             style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: '1rem',
-              fontWeight: 500,
-              color: 'var(--color-text-primary)',
-              lineHeight: 1.3,
+              height: '2.7em',
+              lineHeight: '1.35em',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {title}
           </h3>
-          <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--color-text-muted)' }}>
-            {author} · {total_chapters} chương
-          </p>
-          {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {tags.slice(0, 2).map((t) => (
-                <span
-                  key={t}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-[var(--color-accent-gold)]"
-                >
-                  #{t}
-                </span>
-              ))}
+
+          <div className="mt-1">
+            {/* Author & Chapter count */}
+            <p
+              className="truncate text-[11px] text-[var(--color-text-muted)]"
+              style={{ fontFamily: 'var(--font-ui)' }}
+            >
+              {author} · {total_chapters} chương
+            </p>
+
+            {/* Tags row: Fixed height container (h-5) so card footers are always 100% aligned */}
+            <div className="h-5 flex items-center gap-1 overflow-hidden mt-1">
+              {tags && tags.length > 0 ? (
+                tags.slice(0, 2).map((t) => (
+                  <span
+                    key={t}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-[var(--color-accent-gold)] truncate max-w-[85px]"
+                  >
+                    #{t}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[10px] text-transparent select-none opacity-0">•</span>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </Link>
     </motion.div>
