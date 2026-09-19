@@ -13,3 +13,5 @@ backend/*.pyc
 # Common
 .DS_Store
 *.log
+*.rdb
+dump.rdb

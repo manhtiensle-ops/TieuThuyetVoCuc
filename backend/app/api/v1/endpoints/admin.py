@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.novel import Novel, NovelGenre, NovelTag
 from app.models.chapter import Chapter
+from app.models.comment import Comment
 from app.models.report import Report
 from app.models.blocked_ip import BlockedIP
 from app.schemas.user import UserOut, UserUpdateAdmin
@@ -373,6 +374,61 @@ async def handle_report_action(
 
     else:
         raise HTTPException(status_code=400, detail="Hành động không hợp lệ")
+
+# ── Comment Moderation ────────────────────────────────────────────────
+@router.get("/comments", dependencies=[Depends(require_roles("admin"))])
+async def list_admin_comments(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, le=100),
+    q: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Quản trị danh sách bình luận hệ thống."""
+    query = select(Comment).options(
+        selectinload(Comment.user),
+        selectinload(Comment.chapter).selectinload(Chapter.novel)
+    )
+    count_query = select(func.count(Comment.id))
+
+    if q:
+        search_pattern = f"%{q.strip()}%"
+        query = query.where(Comment.content.ilike(search_pattern))
+        count_query = count_query.where(Comment.content.ilike(search_pattern))
+
+    total = (await db.scalar(count_query)) or 0
+    items = (await db.execute(
+        query.order_by(Comment.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    )).scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": c.id,
+                "content": c.content,
+                "chapter_id": c.chapter_id,
+                "chapter_title": c.chapter.title if c.chapter else None,
+                "chapter_number": c.chapter.number if c.chapter else None,
+                "novel_title": c.chapter.novel.title if c.chapter and c.chapter.novel else None,
+                "novel_slug": c.chapter.novel.slug if c.chapter and c.chapter.novel else None,
+                "paragraph_index": c.paragraph_index,
+                "parent_id": c.parent_id,
+                "is_spoiler": c.is_spoiler,
+                "created_at": c.created_at,
+                "user": {
+                    "id": c.user.id,
+                    "username": c.user.username,
+                    "display_name": c.user.display_name,
+                    "avatar_url": c.user.avatar_url,
+                    "role": c.user.role,
+                } if c.user else None,
+            }
+            for c in items
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": ceil(total / per_page) if total else 1,
+    }
 
 # ── Blocked IP Management ─────────────────────────────────────────────
 @router.get("/blocked-ips", response_model=list[BlockedIPOut], dependencies=[Depends(require_roles("admin"))])

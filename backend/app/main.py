@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.settings import settings
-from app.api.v1.endpoints import auth, novels, chapters, admin, upload
+from app.api.v1.endpoints import auth, novels, chapters, admin, upload, comments
 from app.core.ip_ban import IPBlockMiddleware, load_blocked_ips
 from loguru import logger
 
@@ -36,6 +36,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(novels.router, prefix="/api/v1")
 app.include_router(chapters.router, prefix="/api/v1")
 app.include_router(upload.router, prefix="/api/v1")
+app.include_router(comments.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 
 @app.get("/health")

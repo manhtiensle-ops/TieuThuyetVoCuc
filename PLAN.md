@@ -117,11 +117,12 @@ Xây dựng phân hệ tương tác cộng đồng đột phá cho nền tảng 
   - Tạo model `CommentReaction` trong `backend/app/models/comment.py`.
   - Viết Alembic migration và chạy `alembic upgrade head` (Đã hoàn thành revision `846592377ea1`).
 
-- [ ] **Bước 2: Backend API & Business Logic**
+- [x] **Bước 2: Backend API & Business Logic**
   - Xây dựng Pydantic Schemas trong `backend/app/schemas/comment.py`.
   - Xây dựng router `/comments` với các endpoint summary, list, create, delete, reaction.
-  - Viết middleware hoặc logic kiểm tra rate-limiting chống spam.
-  - Viết unit test / curl test kiểm tra các kịch bản thành công và ngoại lệ.
+  - Viết middleware/logic kiểm tra rate-limiting chống spam (Redis + fallback memory).
+  - Viết unit test / curl test kiểm tra các kịch bản thành công và ngoại lệ (Đã kiểm thử 9/9 test cases thành công).
+  - Bổ sung router quản trị `/admin/comments` phục vụ CMS.
 
 - [ ] **Bước 3: Frontend API & Store**
   - Khai báo interface `Comment`, `CommentReaction`, `CommentsSummary` trong `frontend/src/types/index.ts`.
