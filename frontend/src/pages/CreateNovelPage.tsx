@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { PageWrapper } from '@/components/novel/NovelCard'
+import { CoverUploader } from '@/components/novel/CoverUploader'
 import { novelsApi, uploadApi } from '@/api'
 import { useAuthStore } from '@/stores'
 import {
@@ -71,27 +72,9 @@ export default function CreateNovelPage() {
   const [chapterContent, setChapterContent] = useState('')
 
   // State flags
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploadingImage(true)
-    setErrorMessage('')
-    try {
-      const res = await uploadApi.uploadImage(file)
-      // If relative url returned, construct full path or use relative directly
-      setCoverUrl(res.url)
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.detail || 'Tải ảnh bìa thất bại')
-    } finally {
-      setIsUploadingImage(false)
-    }
-  }
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres((prev) =>
@@ -275,61 +258,19 @@ export default function CreateNovelPage() {
             </div>
           </div>
 
-          {/* Cover image upload & preview */}
+          {/* Cover image studio & upload */}
           <div>
-            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-2">
               Ảnh Bìa Truyện
             </label>
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              {/* Preview box */}
-              <div
-                className="w-28 h-40 rounded-lg overflow-hidden border border-[var(--color-border-medium)] bg-[var(--color-bg-deep)] flex items-center justify-center flex-shrink-0"
-              >
-                {coverUrl ? (
-                  <img
-                    src={coverUrl.startsWith('/') ? `http://localhost:8000${coverUrl}` : coverUrl}
-                    alt="Bìa truyện"
-                    className="w-full h-full object-cover"
-                    onError={() => setErrorMessage('Link ảnh không hợp lệ hoặc không tải được')}
-                  />
-                ) : (
-                  <div className="text-center p-2 text-[var(--color-text-muted)]">
-                    <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
-                    <span className="text-[10px]">Chưa có bìa</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload controls */}
-              <div className="flex-1 space-y-3 w-full">
-                <div className="flex items-center gap-3">
-                  <label className="cursor-pointer px-4 py-2 rounded-xl text-xs font-medium bg-[var(--color-bg-raised)] border border-[var(--color-border-medium)] hover:border-[var(--color-accent-gold)] text-[var(--color-text-primary)] transition-all flex items-center gap-2">
-                    {isUploadingImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                    <span>{isUploadingImage ? 'Đang tải ảnh...' : 'Tải Ảnh Từ Máy'}</span>
-                    <input
-                      type="file"
-                      accept="image/png, image/jpeg, image/webp"
-                      onChange={handleImageUpload}
-                      disabled={isUploadingImage}
-                      className="hidden"
-                    />
-                  </label>
-                  <span className="text-[11px] text-[var(--color-text-muted)]">
-                    Hỗ trợ JPG, PNG, WEBP (Tối đa 5MB)
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <input
-                    type="url"
-                    placeholder="Hoặc dán URL ảnh trực tiếp: https://..."
-                    value={coverUrl}
-                    onChange={(e) => setCoverUrl(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-[var(--color-bg-deep)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] text-xs focus:outline-none focus:border-[var(--color-accent-gold)]"
-                  />
-                </div>
-              </div>
-            </div>
+            <CoverUploader
+              value={coverUrl}
+              onChange={setCoverUrl}
+              title={title}
+              author={author || user?.display_name || ''}
+              genres={selectedGenres}
+              disabled={isSubmitting}
+            />
           </div>
 
           {/* Description */}

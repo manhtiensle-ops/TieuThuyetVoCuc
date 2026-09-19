@@ -55,9 +55,13 @@ export const uploadApi = {
   uploadImage: async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
-    const res = await api.post<{ url: string; filename: string }>('/upload/image', formData, {
+    const res = await api.post<{ url: string; filename: string; width?: number; height?: number; size?: number }>('/upload/image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+    return res.data
+  },
+  uploadFromUrl: async (url: string) => {
+    const res = await api.post<{ url: string; filename: string; width?: number; height?: number; size?: number }>('/upload/from-url', { url })
     return res.data
   },
 }

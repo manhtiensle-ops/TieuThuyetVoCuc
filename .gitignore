@@ -18,4 +18,5 @@ dump.rdb
 screenshot_*.png
 backend/data/
 backend/app/api/static/
+backend/app/static/uploads/
 data/novels/khuay-dao-the-gioi-ao-xe-ve-phep-hang-e-v2
