@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Suspense, lazy } from 'react'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import '@/styles/globals.css'
 
 // Lazy pages
@@ -49,21 +50,23 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster
-        position="bottom-center"
-        toastOptions={{
-          style: {
-            background: 'var(--color-bg-surface)',
-            color: 'var(--color-text-primary)',
-            border: '1px solid var(--color-border-medium)',
-            fontFamily: 'var(--font-ui)',
-            fontSize: '13px',
-          },
-        }}
-      />
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: 'var(--color-bg-surface)',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--color-border-medium)',
+              fontFamily: 'var(--font-ui)',
+              fontSize: '13px',
+            },
+          }}
+        />
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }

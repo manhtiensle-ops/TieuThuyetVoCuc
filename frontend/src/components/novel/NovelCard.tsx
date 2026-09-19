@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { cn } from '@/lib/utils'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 const HeroScene = lazy(() =>
   import('@/components/three/HeroScene').then((m) => ({ default: m.HeroScene }))
@@ -13,10 +14,14 @@ const pageVariants = {
   animate: { opacity: 1, rotateY: 0 },
   exit:    { opacity: 0, rotateY: 6 },
 }
-const pageTransition = { type: 'spring', stiffness: 220, damping: 28 }
+const pageTransition = { type: 'spring' as const, stiffness: 220, damping: 28 }
 
-interface PageWrapperProps { children: React.ReactNode; className?: string }
-export function PageWrapper({ children, className }: PageWrapperProps) {
+interface PageWrapperProps {
+  children: React.ReactNode
+  className?: string
+  style?: React.CSSProperties
+}
+export function PageWrapper({ children, className, style }: PageWrapperProps) {
   return (
     <motion.div
       variants={pageVariants}
@@ -25,6 +30,7 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
       exit="exit"
       transition={pageTransition}
       className={cn('min-h-screen', className)}
+      style={style}
     >
       {children}
     </motion.div>
@@ -36,9 +42,11 @@ export function LandingHero() {
   return (
     <section className="relative h-screen overflow-hidden flex items-center justify-center">
       {/* Three.js 3D scene */}
-      <Suspense fallback={null}>
-        <HeroScene />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <HeroScene />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* Gradient vignette */}
       <div

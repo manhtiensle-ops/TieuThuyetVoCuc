@@ -148,7 +148,7 @@ function ReaderControls({
                     )}
                     style={{
                       background: theme === key ? 'var(--color-bg-raised)' : 'transparent',
-                      ringColor: 'var(--color-accent-gold)',
+                      outline: theme === key ? '1px solid var(--color-accent-gold)' : 'none',
                       fontFamily: 'var(--font-ui)',
                       color: 'var(--color-text-primary)',
                     }}
