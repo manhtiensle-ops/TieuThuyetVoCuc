@@ -1,7 +1,13 @@
 from sqlalchemy import String, Enum, DateTime, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
+from typing import TYPE_CHECKING
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from app.models.comment import Comment
+    from app.models.reading_history import ReadingHistory
+    from app.models.novel import Novel
 
 class User(Base):
     __tablename__ = "users"
@@ -18,8 +24,11 @@ class User(Base):
         default="reader", nullable=False
     )
     is_active: Mapped[bool]     = mapped_column(default=True)
+    is_banned: Mapped[bool]     = mapped_column(default=False, nullable=False)
+    ban_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_verified: Mapped[bool]   = mapped_column(default=False)
     created_at: Mapped[datetime]= mapped_column(DateTime(timezone=True), server_default=func.now())
 
     comments: Mapped[list["Comment"]] = relationship(back_populates="user", lazy="dynamic")
     reading_history: Mapped[list["ReadingHistory"]] = relationship(back_populates="user", lazy="dynamic")
+    novels: Mapped[list["Novel"]] = relationship(back_populates="uploader", lazy="dynamic")

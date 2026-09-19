@@ -18,6 +18,7 @@ const LoginPage    = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 const AdminPage    = lazy(() => import('@/pages/AdminPage'))
+const CreateNovelPage = lazy(() => import('@/pages/CreateNovelPage'))
 
 function Loader() {
   return (
@@ -78,6 +79,14 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Suspense fallback={<Loader />}><RegisterPage /></Suspense>,
+  },
+  {
+    path: '/create-novel',
+    element: (
+      <MainLayout>
+        <Suspense fallback={<Loader />}><CreateNovelPage /></Suspense>
+      </MainLayout>
+    ),
   },
   {
     path: '/admin',

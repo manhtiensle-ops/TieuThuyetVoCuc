@@ -1,13 +1,23 @@
 import api from '@/lib/api-client'
 import type {
-  Novel, Chapter, ChapterMeta, Comment, User,
-  PaginatedResponse, AuthTokens, AdminStats,
-  NovelCreateInput, ChapterCreateInput,
+  Novel,
+  Chapter,
+  ChapterMeta,
+  Comment,
+  User,
+  PaginatedResponse,
+  AuthTokens,
+  AdminStats,
+  NovelCreateInput,
+  ChapterCreateInput,
+  Report,
+  BlockedIP,
+  TaxonomyData,
 } from '@/types'
 
 // ── Novels ────────────────────────────────────────────────
 export const novelsApi = {
-  list: (params?: { page?: number; genre?: string; status?: string; q?: string }) =>
+  list: (params?: { page?: number; per_page?: number; genre?: string; tag?: string; status?: string; q?: string; uploader?: string }) =>
     api.get<PaginatedResponse<Novel>>('/novels', { params }).then((r) => r.data),
 
   get: (slug: string) =>
@@ -21,6 +31,30 @@ export const novelsApi = {
 
   getHot: () =>
     api.get<Novel[]>('/novels/hot').then((r) => r.data),
+
+  getTaxonomy: () =>
+    api.get<TaxonomyData>('/novels/taxonomy/all').then((r) => r.data),
+
+  create: (data: NovelCreateInput) =>
+    api.post<Novel>('/novels', data).then((r) => r.data),
+
+  addChapter: (slug: string, data: ChapterCreateInput) =>
+    api.post<ChapterMeta>(`/novels/${slug}/chapters`, data).then((r) => r.data),
+
+  report: (slug: string, data: { reason: string; details: string }) =>
+    api.post<{ success: boolean; message: string; report_id: number }>(`/novels/${slug}/report`, data).then((r) => r.data),
+}
+
+// ── Upload ────────────────────────────────────────────────
+export const uploadApi = {
+  uploadImage: async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await api.post<{ url: string; filename: string }>('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data
+  },
 }
 
 // ── Chapters ──────────────────────────────────────────────
@@ -82,11 +116,17 @@ export const adminApi = {
   getStats: () =>
     api.get<AdminStats>('/admin/stats').then((r) => r.data),
 
-  listUsers: (params?: { page?: number; role?: string; q?: string }) =>
+  listUsers: (params?: { page?: number; per_page?: number; role?: string; q?: string }) =>
     api.get<PaginatedResponse<User>>('/admin/users', { params }).then((r) => r.data),
 
-  updateUser: (userId: number, body: { role?: string; is_active?: boolean }) =>
-    api.patch<User>(`/admin/users/${userId}`, body).then((r) => r.data),
+  updateUser: (userId: number, body: { role?: string; is_active?: boolean; is_banned?: boolean; ban_reason?: string }) =>
+    api.put<User>(`/admin/users/${userId}`, body).then((r) => r.data),
+
+  banUser: (userId: number, reason?: string) =>
+    api.post<{ success: boolean; message: string }>(`/admin/users/${userId}/ban`, null, { params: { reason } }).then((r) => r.data),
+
+  unbanUser: (userId: number) =>
+    api.post<{ success: boolean; message: string }>(`/admin/users/${userId}/unban`).then((r) => r.data),
 
   createNovel: (data: NovelCreateInput) =>
     api.post<Novel>('/admin/novels', data).then((r) => r.data),
@@ -105,6 +145,21 @@ export const adminApi = {
 
   deleteChapter: (chapterId: number) =>
     api.delete(`/admin/chapters/${chapterId}`),
+
+  listReports: (params?: { page?: number; per_page?: number; status?: string }) =>
+    api.get<PaginatedResponse<Report>>('/admin/reports', { params }).then((r) => r.data),
+
+  handleReportAction: (reportId: number, body: { action: string; notes?: string }) =>
+    api.post<{ success: boolean; message: string }>(`/admin/reports/${reportId}/action`, body).then((r) => r.data),
+
+  listBlockedIPs: () =>
+    api.get<BlockedIP[]>('/admin/blocked-ips').then((r) => r.data),
+
+  blockIP: (data: { ip_address: string; reason: string }) =>
+    api.post<BlockedIP>('/admin/blocked-ips', data).then((r) => r.data),
+
+  unblockIP: (ipId: number) =>
+    api.delete(`/admin/blocked-ips/${ipId}`),
 
   syncFolders: () =>
     api.post<{ novels_synced: number; chapters_synced: number }>('/admin/sync-folders').then((r) => r.data),

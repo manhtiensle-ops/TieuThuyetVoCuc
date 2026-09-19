@@ -26,6 +26,8 @@ class UserOut(BaseModel):
     bio: str | None
     role: str
     is_active: bool = True
+    is_banned: bool = False
+    ban_reason: str | None = None
     joined_at: datetime | None = None
     novels_read: int = 0
     chapters_read: int = 0
@@ -34,6 +36,8 @@ class UserOut(BaseModel):
 class UserUpdateAdmin(BaseModel):
     role: str | None = None
     is_active: bool | None = None
+    is_banned: bool | None = None
+    ban_reason: str | None = None
 
 class TokenOut(BaseModel):
     access_token: str

@@ -16,6 +16,7 @@ import {
   Check,
   Palette,
   ChevronDown,
+  Plus,
   type LucideIcon,
 } from 'lucide-react'
 import { useAuthStore, useReaderStore } from '@/stores'
@@ -123,6 +124,7 @@ export function Navbar() {
   const navLinks = [
     { name: 'Trang Chủ', path: '/', icon: Home },
     { name: 'Kho Truyện', path: '/novels', icon: BookOpen },
+    ...(isAuthenticated ? [{ name: 'Đăng Truyện', path: '/create-novel', icon: Plus }] : []),
     ...(isAuthenticated && (user?.role === 'admin' || user?.role === 'editor')
       ? [{ name: 'Quản Trị', path: '/admin', icon: Shield }]
       : []),
@@ -416,6 +418,15 @@ export function Navbar() {
                 <BookOpen size={16} className="text-[var(--color-accent-gold)]" />
                 Kho Truyện
               </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/create-novel"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-accent-gold)] hover:bg-[var(--color-bg-raised)]"
+                >
+                  <Plus size={16} />
+                  + Đăng Truyện Mới
+                </Link>
+              )}
               {isAuthenticated && (user?.role === 'admin' || user?.role === 'editor') && (
                 <Link
                   to="/admin"

@@ -3,12 +3,15 @@ from datetime import datetime
 
 class NovelCreate(BaseModel):
     title: str
-    author: str
+    author: str | None = None
     slug: str | None = None
     description: str = ""
     cover_url: str | None = None
     status: str = "ongoing"
     genres: list[str] = []
+    tags: list[str] = []
+    first_chapter_title: str | None = None
+    first_chapter_content: str | None = None
 
 class NovelUpdate(BaseModel):
     title: str | None = None
@@ -18,6 +21,7 @@ class NovelUpdate(BaseModel):
     cover_url: str | None = None
     status: str | None = None
     genres: list[str] | None = None
+    tags: list[str] | None = None
 
 class NovelOut(BaseModel):
     model_config = {"from_attributes": True}
@@ -28,10 +32,13 @@ class NovelOut(BaseModel):
     cover_url: str | None
     description: str
     genres: list[str] = []
+    tags: list[str] = []
     status: str
     total_chapters: int
     views: int
     rating: float
+    uploader_id: int | None = None
+    uploader_name: str | None = None
     updated_at: datetime
 
 class NovelListOut(BaseModel):

@@ -8,10 +8,13 @@ export interface Novel {
   cover_url: string | null
   description: string
   genres: string[]
+  tags: string[]
   status: 'ongoing' | 'completed' | 'hiatus'
   total_chapters: number
   views: number
   rating: number
+  uploader_id?: number | null
+  uploader_name?: string | null
   updated_at: string
 }
 
@@ -38,11 +41,14 @@ export interface ChapterMeta {
 export interface User {
   id: number
   username: string
+  email?: string
   display_name: string
   avatar_url: string | null
   bio: string
   role: 'admin' | 'editor' | 'vip' | 'reader'
   is_active?: boolean
+  is_banned?: boolean
+  ban_reason?: string | null
   joined_at: string
   novels_read: number
   chapters_read: number
@@ -54,16 +60,61 @@ export interface AdminStats {
   total_novels: number
   total_chapters: number
   total_views: number
+  pending_reports?: number
+  blocked_ips_count?: number
+}
+
+export interface Report {
+  id: number
+  novel_id: number
+  novel_title: string
+  novel_slug: string
+  novel_cover_url: string | null
+  uploader_id: number | null
+  uploader_name: string | null
+  uploader_ip: string | null
+  reporter_id: number | null
+  reporter_name: string | null
+  reporter_ip: string | null
+  reason: string
+  details: string
+  status: 'pending' | 'resolved' | 'dismissed'
+  admin_action: string | null
+  admin_notes: string | null
+  created_at: string
+  resolved_at: string | null
+}
+
+export interface BlockedIP {
+  id: number
+  ip_address: string
+  reason: string
+  created_at: string
+  blocked_by_id: number | null
+  blocked_by_name: string | null
+}
+
+export interface TaxonomyItem {
+  name: string
+  count: number
+}
+
+export interface TaxonomyData {
+  genres: TaxonomyItem[]
+  tags: TaxonomyItem[]
 }
 
 export interface NovelCreateInput {
   title: string
-  author: string
+  author?: string
   slug?: string
   description?: string
   cover_url?: string
   status?: 'ongoing' | 'completed' | 'hiatus'
   genres?: string[]
+  tags?: string[]
+  first_chapter_title?: string
+  first_chapter_content?: string
 }
 
 export interface ChapterCreateInput {

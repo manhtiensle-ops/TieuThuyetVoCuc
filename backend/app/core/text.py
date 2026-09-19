@@ -28,3 +28,10 @@ def remove_diacritics(text: str) -> str:
     # Thay thế đ/Đ
     without_marks = without_marks.replace("đ", "d").replace("Đ", "D")
     return without_marks.lower()
+
+def slugify(text: str) -> str:
+    """Tạo URL slug an toàn từ tiêu đề tiếng Việt."""
+    cleaned = remove_diacritics(text)
+    slug = re.sub(r'[^a-z0-9]+', '-', cleaned).strip('-')
+    return slug or "truyen"
+

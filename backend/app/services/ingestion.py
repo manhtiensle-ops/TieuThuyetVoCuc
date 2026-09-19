@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import selectinload
 
-from app.models.novel import Novel, NovelGenre
+from app.models.novel import Novel, NovelGenre, NovelTag
 from app.models.chapter import Chapter
 from app.core.text import normalize_text, remove_diacritics
 
@@ -98,7 +98,7 @@ async def export_db_to_folder(db: AsyncSession, data_dir: Path) -> dict:
     data_dir.mkdir(parents=True, exist_ok=True)
     
     result = await db.execute(
-        select(Novel).options(selectinload(Novel.genres))
+        select(Novel).options(selectinload(Novel.genres), selectinload(Novel.tags))
     )
     novels = result.scalars().all()
 
@@ -115,6 +115,7 @@ async def export_db_to_folder(db: AsyncSession, data_dir: Path) -> dict:
             "author": novel.author,
             "slug": novel.slug,
             "genres": [g.genre for g in novel.genres],
+            "tags": [t.tag for t in novel.tags],
             "status": novel.status,
             "rating": novel.rating,
             "cover_url": novel.cover_url,
@@ -209,6 +210,13 @@ async def sync_folder_to_db(db: AsyncSession, data_dir: Path) -> dict:
         for g in genres:
             if g.strip():
                 db.add(NovelGenre(novel_id=novel.id, genre=g.strip()))
+
+        # Cập nhật Tags
+        tags = [normalize_text(t) for t in meta.get("tags", [])]
+        await db.execute(delete(NovelTag).where(NovelTag.novel_id == novel.id))
+        for t in tags:
+            if t.strip():
+                db.add(NovelTag(novel_id=novel.id, tag=t.strip()))
 
         await db.flush()
 

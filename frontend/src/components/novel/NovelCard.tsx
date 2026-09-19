@@ -152,6 +152,7 @@ export function LandingHero() {
 
 // ── Novel Card ─────────────────────────────────────────────────────────────────
 interface NovelCardProps {
+  id?: number
   title: string
   author: string
   cover_url: string | null
@@ -159,12 +160,13 @@ interface NovelCardProps {
   status: 'ongoing' | 'completed' | 'hiatus'
   total_chapters: number
   views: number
+  tags?: string[]
 }
 
 const statusLabel = { ongoing: 'Đang Ra', completed: 'Hoàn', hiatus: 'Tạm Ngưng' }
 const statusColor  = { ongoing: '#34d399', completed: '#C9A84C', hiatus: '#94a3b8' }
 
-export function NovelCard({ title, author, cover_url, slug, status, total_chapters, views }: NovelCardProps) {
+export function NovelCard({ title, author, cover_url, slug, status, total_chapters, views, tags }: NovelCardProps) {
   return (
     <motion.div
       whileHover={{ y: -6, scale: 1.02 }}
@@ -249,6 +251,18 @@ export function NovelCard({ title, author, cover_url, slug, status, total_chapte
           <p style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'var(--color-text-muted)' }}>
             {author} · {total_chapters} chương
           </p>
+          {tags && tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {tags.slice(0, 2).map((t) => (
+                <span
+                  key={t}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-[var(--color-accent-gold)]"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </Link>
     </motion.div>
