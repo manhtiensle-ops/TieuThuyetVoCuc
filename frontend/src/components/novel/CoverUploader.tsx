@@ -101,9 +101,10 @@ export const CoverUploader: React.FC<CoverUploaderProps> = ({
     setIsUploading(true)
     setUploadProgress(20)
 
+    let progressTimer: any = null
     try {
-      const progressTimer = setInterval(() => {
-        setUploadProgress((prev) => (prev < 85 ? prev + 15 : prev))
+      progressTimer = setInterval(() => {
+        setUploadProgress((prev) => (prev < 90 ? prev + 10 : prev))
       }, 150)
 
       const res = await uploadApi.uploadImage(file)
@@ -119,9 +120,14 @@ export const CoverUploader: React.FC<CoverUploaderProps> = ({
         setImageMeta({ width: res.width, height: res.height, size: res.size })
       }
     } catch (err: any) {
-      const detail = err.response?.data?.detail || 'Tải ảnh lên máy chủ thất bại. Vui lòng thử lại.'
+      if (progressTimer) clearInterval(progressTimer)
+      const detail =
+        err.response?.status === 401
+          ? 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại.'
+          : err.response?.data?.detail || 'Tải ảnh lên máy chủ thất bại. Vui lòng thử lại.'
       setErrorMessage(detail)
     } finally {
+      if (progressTimer) clearInterval(progressTimer)
       setIsUploading(false)
       setTimeout(() => setUploadProgress(0), 1000)
     }
