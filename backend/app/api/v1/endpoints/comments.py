@@ -316,7 +316,7 @@ async def delete_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="Không tìm thấy bình luận")
 
-    if comment.user_id != current_user.id and current_user.role not in ("admin", "superadmin"):
+    if comment.user_id != current_user.id and current_user.role not in ("admin", "editor"):
         raise HTTPException(status_code=403, detail="Bạn không có quyền xóa bình luận này")
 
     await db.delete(comment)

@@ -1,4 +1,5 @@
 import api from '@/lib/api-client'
+import { tokenStore } from '@/lib/tokenStore'
 import type {
   Novel,
   Chapter,
@@ -106,13 +107,15 @@ export const commentsApi = {
 export const authApi = {
   login: (email: string, password: string) =>
     api.post<AuthTokens>('/auth/login', { email, password }).then((r) => {
-      localStorage.setItem('access_token', r.data.access_token)
+      // [FIX] Lưu vào memory thay vì localStorage
+      tokenStore.set(r.data.access_token)
       return r.data
     }),
 
   register: (data: { username: string; email: string; password: string }) =>
     api.post<AuthTokens>('/auth/register', data).then((r) => {
-      localStorage.setItem('access_token', r.data.access_token)
+      // [FIX] Lưu vào memory thay vì localStorage
+      tokenStore.set(r.data.access_token)
       return r.data
     }),
 

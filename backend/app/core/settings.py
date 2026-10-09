@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "https://novel-platform.com"]
 
+    # Trusted reverse proxy IPs — chỉ các IP này được phép inject X-Forwarded-For
+    # Thêm IP Nginx/LB vào đây khi deploy production (vd: "10.0.0.1,10.0.0.2")
+    TRUSTED_PROXY_IPS: list[str] = ["127.0.0.1", "::1"]
+
     # Rate limit (requests per minute)
     RATE_LIMIT_RPM: int = 60
 

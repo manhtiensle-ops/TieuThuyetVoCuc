@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { tokenStore } from '@/lib/tokenStore'
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -7,14 +8,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Request interceptor: đính kèm access token ──────────
+// ── Request interceptor: đính kèm access token từ memory ─────────────
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  // [FIX] Đọc từ tokenStore (in-memory) thay vì localStorage
+  const token = tokenStore.get()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// ── Response interceptor: tự refresh khi 401 ────────────
+// ── Response interceptor: tự refresh khi 401 ─────────────────────────
 let isRefreshing = false
 let failedQueue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = []
 
@@ -39,14 +41,17 @@ api.interceptors.response.use(
       original._retry = true
       isRefreshing = true
       try {
+        // Silent refresh: HttpOnly cookie được gửi tự động nhờ withCredentials: true
         const { data } = await api.post<{ access_token: string }>('/auth/refresh')
-        localStorage.setItem('access_token', data.access_token)
+        // [FIX] Lưu token mới vào memory, không vào localStorage
+        tokenStore.set(data.access_token)
         processQueue(null, data.access_token)
         original.headers.Authorization = `Bearer ${data.access_token}`
         return api(original)
       } catch (err) {
         processQueue(err, null)
-        localStorage.removeItem('access_token')
+        // [FIX] Chỉ xóa memory token, không localStorage.removeItem
+        tokenStore.clear()
         window.location.href = '/login'
         return Promise.reject(err)
       } finally {

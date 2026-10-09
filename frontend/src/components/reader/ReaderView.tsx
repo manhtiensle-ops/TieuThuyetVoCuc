@@ -12,6 +12,9 @@ import { parseContentParagraphs } from '@/lib/paragraphParser'
 import { ParagraphCommentBadge } from './ParagraphCommentBadge'
 import { CommentDrawer } from './CommentDrawer'
 import { ChapterCommentsSection } from './ChapterCommentsSection'
+import { useScrollProgress } from '@/hooks/useScrollProgress'
+import { useChapterPrefetch } from '@/hooks/useChapterPrefetch'
+import { useOfflineSync } from '@/hooks/useOfflineSync'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -365,6 +368,27 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
   const contentRef = useRef<HTMLElement>(null)
   const lastScrollY = useRef(0)
 
+  // ── Scroll progress + prefetch + offline sync ────────────
+  const { scrollPct, containerRef } = useScrollProgress()
+
+  useChapterPrefetch({
+    novelSlug: novel.slug,
+    currentChapterNum: chapter.number,
+    totalChapters: chapters.length,
+    scrollPct,
+  })
+
+  const { saveProgress } = useOfflineSync()
+  // Debounce đã xử lý trong useScrollProgress — gọi saveProgress mỗi khi scrollPct update
+  useEffect(() => {
+    if (scrollPct === 0) return
+    saveProgress({
+      novel_slug: novel.slug,
+      chapter_number: chapter.number,
+      scroll_pct: scrollPct,
+    })
+  }, [scrollPct, novel.slug, chapter.number, saveProgress])
+
   // Parse paragraphs from chapter content
   const paragraphs = useMemo(() => {
     return parseContentParagraphs(chapter.content)
@@ -474,9 +498,13 @@ export function ReaderView({ novel, chapter, chapters }: ReaderViewProps) {
 
       {/* Main content */}
       <main
-        ref={contentRef}
+        ref={(el) => {
+          // Dual-ref: contentRef cho GSAP, containerRef cho scroll tracking
+          ;(contentRef as React.MutableRefObject<HTMLElement | null>).current = el
+          ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el as HTMLDivElement | null
+        }}
         className="px-4 pb-32"
-        style={{ paddingTop: '100px' }}
+        style={{ paddingTop: '100px', overflowY: 'auto', height: '100vh' }}
       >
         {/* Chapter heading */}
         <div className="max-w-2xl mx-auto text-center mb-12">

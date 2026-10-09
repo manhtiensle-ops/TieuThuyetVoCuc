@@ -5,6 +5,7 @@ from app.models.comment import Comment, CommentReaction
 from app.models.reading_history import ReadingHistory
 from app.models.report import Report
 from app.models.blocked_ip import BlockedIP
+from app.models.subscription import SubscriptionOrder
 
 __all__ = [
     "User",

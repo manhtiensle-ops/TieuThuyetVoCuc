@@ -34,7 +34,10 @@ from app.schemas.report import (
 from app.core.deps import require_roles
 from app.core.text import normalize_text, remove_diacritics
 from app.core.ip_ban import add_ip_to_cache, remove_ip_from_cache
+from app.core.chapter_cache import invalidate_chapter
 from app.services.ingestion import sync_folder_to_db, export_db_to_folder
+
+from app.core.text import safe_novel_path
 
 DATA_DIR = Path(__file__).resolve().parents[5] / "data" / "novels"
 
@@ -285,7 +288,7 @@ async def handle_report_action(
         novel_title = novel.title if novel else "Truyện"
         if novel:
             try:
-                folder = DATA_DIR / novel.slug
+                folder = safe_novel_path(DATA_DIR, novel.slug)
                 if folder.exists():
                     shutil.rmtree(folder)
             except Exception:
@@ -312,7 +315,7 @@ async def handle_report_action(
 
         if novel:
             try:
-                folder = DATA_DIR / novel.slug
+                folder = safe_novel_path(DATA_DIR, novel.slug)
                 if folder.exists():
                     shutil.rmtree(folder)
             except Exception:
@@ -357,7 +360,7 @@ async def handle_report_action(
         # Gỡ bỏ truyện
         if novel:
             try:
-                folder = DATA_DIR / novel.slug
+                folder = safe_novel_path(DATA_DIR, novel.slug)
                 if folder.exists():
                     shutil.rmtree(folder)
             except Exception:
@@ -635,9 +638,13 @@ async def update_chapter(
 
     await db.commit()
     await db.refresh(chapter)
+    # Invalidate Redis cache sau khi sửa nội dung
+    novel_obj = (await db.execute(select(Novel).where(Novel.id == chapter.novel_id))).scalar_one_or_none()
+    if novel_obj:
+        await invalidate_chapter(novel_obj.slug, chapter.number)
     return chapter
 
-@router.delete("/chapters/{chapter_id}", status_code=204)
+@router.delete("/chapters/{chapter_id}", status_code=204, dependencies=[Depends(require_roles("admin", "editor"))])
 async def delete_chapter(
     chapter_id: int,
     db: AsyncSession = Depends(get_db),
@@ -645,6 +652,10 @@ async def delete_chapter(
     chapter = (await db.execute(select(Chapter).where(Chapter.id == chapter_id))).scalar_one_or_none()
     if not chapter:
         raise HTTPException(status_code=404, detail="Không tìm thấy chương")
+
+    # Lấy slug trước khi xóa (cần để invalidate cache)
+    novel_obj = (await db.execute(select(Novel).where(Novel.id == chapter.novel_id))).scalar_one_or_none()
+    chapter_number = chapter.number
 
     novel_id = chapter.novel_id
     await db.delete(chapter)
@@ -656,15 +667,20 @@ async def delete_chapter(
         novel.total_chapters = count
 
     await db.commit()
+    # Invalidate Redis cache sau khi xóa chapter
+    if novel_obj:
+        await invalidate_chapter(novel_obj.slug, chapter_number)
     return None
 
 # ── Folder Sync / Ingestion ───────────────────────────────────────────
-@router.post("/sync-folders")
+# [FIX] Giới hạn chỉ admin — editor KHÔNG được phép chạy sync/export
+# vì sync_folder_to_db() ghi đè DB từ file hệ thống (nguy cơ data injection)
+@router.post("/sync-folders", dependencies=[Depends(require_roles("admin"))])
 async def trigger_folder_sync(db: AsyncSession = Depends(get_db)):
     res = await sync_folder_to_db(db, DATA_DIR)
     return res
 
-@router.post("/export-folders")
+@router.post("/export-folders", dependencies=[Depends(require_roles("admin"))])
 async def trigger_folder_export(db: AsyncSession = Depends(get_db)):
     res = await export_db_to_folder(db, DATA_DIR)
     return res

@@ -1,7 +1,9 @@
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
 frontend/.env.local
+frontend/.env*.local
 
 # Backend
 backend/.venv/
@@ -9,6 +11,25 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/.env
 backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+
+# User Data & Storage (Ignore dynamic symlinks and test data, keep sample novels)
+data/novels/*
+!data/novels/ha-dong-dong-con-duong-chu-bac/
+!data/novels/ha-dong-dong-con-duong-chu-bac/**
+!data/novels/kiem-ma-trong-sinh/
+!data/novels/kiem-ma-trong-sinh/**
+!data/novels/pham-nhan-tu-tien-truyen/
+!data/novels/pham-nhan-tu-tien-truyen/**
+!data/novels/tan-the-du-hanh-gia/
+!data/novels/tan-the-du-hanh-gia/**
+!data/novels/trieu-thiet-son-khong-so-troi/
+!data/novels/trieu-thiet-son-khong-so-troi/**
+backend/data/
+backend/app/api/static/
+backend/app/static/uploads/
 
 # Common
 .DS_Store
@@ -16,7 +37,5 @@ backend/*.pyc
 *.rdb
 dump.rdb
 screenshot_*.png
-backend/data/
-backend/app/api/static/
-backend/app/static/uploads/
-data/novels/khuay-dao-the-gioi-ao-xe-ve-phep-hang-e-v2
+.idea/
+.vscode/

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import uuid
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
@@ -17,7 +18,13 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    return jwt.encode({"sub": str(subject), "exp": expire}, settings.SECRET_KEY, settings.ALGORITHM)
+    # [FIX] Thêm jti (JWT ID) để blacklist chính xác từng token sau logout
+    jti = str(uuid.uuid4())
+    return jwt.encode(
+        {"sub": str(subject), "exp": expire, "jti": jti},
+        settings.SECRET_KEY,
+        settings.ALGORITHM,
+    )
 
 def create_refresh_token(subject: str | Any) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)

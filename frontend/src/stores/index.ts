@@ -1,8 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Theme, FontSize, LineHeight } from '@/types'
+import { tokenStore } from '@/lib/tokenStore'
 
 // ── Auth Store ────────────────────────────────────────────────────────────────
+// [FIX] Không dùng persist middleware cho auth state — token lưu in-memory qua
+// tokenStore, user object được tải lại sau page reload bằng silent-refresh
+// (HttpOnly refresh cookie → GET /auth/me → setUser)
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
@@ -10,20 +14,16 @@ interface AuthState {
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      logout: () => {
-        localStorage.removeItem('access_token')
-        set({ user: null, isAuthenticated: false })
-      },
-    }),
-    { name: 'novel-auth-state' }
-  )
-)
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  isAuthenticated: false,
+  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  logout: () => {
+    // [FIX] Xóa in-memory token thay vì localStorage
+    tokenStore.clear()
+    set({ user: null, isAuthenticated: false })
+  },
+}))
 
 // ── Reading Preferences Store (persisted) ─────────────────────────────────────
 interface ReaderState {

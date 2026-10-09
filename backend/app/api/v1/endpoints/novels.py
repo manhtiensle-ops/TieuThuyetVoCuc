@@ -4,7 +4,7 @@ from math import ceil
 from pathlib import Path
 from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_, distinct
+from sqlalchemy import select, func, update, or_, distinct
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
@@ -21,7 +21,7 @@ from app.schemas.novel import (
     ChapterCreate,
 )
 from app.schemas.report import ReportCreate
-from app.core.text import normalize_text, slugify
+from app.core.text import normalize_text, slugify, safe_novel_path
 from app.core.deps import get_current_user, get_optional_current_user, get_db
 from app.core.ip_ban import get_client_ip
 
@@ -244,7 +244,7 @@ async def create_novel(
 
     # Sync folder on disk: data/novels/{slug}/metadata.json
     try:
-        novel_folder = DATA_DIR / final_slug
+        novel_folder = safe_novel_path(DATA_DIR, final_slug)
         novel_folder.mkdir(parents=True, exist_ok=True)
         meta_path = novel_folder / "metadata.json"
         meta_content = {
@@ -278,7 +278,13 @@ async def get_novel(slug: str, db: AsyncSession = Depends(get_db)):
 
     # Serialize dữ liệu trước khi commit để tránh expire ORM attributes
     data = _serialize(novel)
-    novel.views += 1
+
+    # [FIX] Atomic SQL increment — tránh race condition read-modify-write
+    # novel.views += 1 (ORM) bị mất count khi nhiều request đồng thời
+    # UPDATE ... SET views = views + 1 là atomic tại DB level
+    await db.execute(
+        update(Novel).where(Novel.id == novel.id).values(views=Novel.views + 1)
+    )
     await db.commit()
     return data
 
@@ -335,7 +341,7 @@ async def add_chapter_to_novel(
 
     # Ghi file ra data/novels/{slug}/
     try:
-        novel_folder = DATA_DIR / slug
+        novel_folder = safe_novel_path(DATA_DIR, slug)
         novel_folder.mkdir(parents=True, exist_ok=True)
         file_slug = slugify(chapter.title)
         ch_file = novel_folder / f"{chapter.number:03d}-{file_slug}.md"
